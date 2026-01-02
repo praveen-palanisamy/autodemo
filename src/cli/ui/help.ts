@@ -16,6 +16,7 @@ export function printHelp(parsed: ParsedCli): void {
     "",
     "Global options:",
     "  --config <path>   Path to .autodemo.yml (default: ./.autodemo.yml)",
+    "  --tui             Force Ink UI even if stdout isn't detected as a TTY",
     "  --no-tui          Disable Ink UI (recommended in CI)",
     "  --json            Emit structured JSON logs (CI-friendly)",
     "",

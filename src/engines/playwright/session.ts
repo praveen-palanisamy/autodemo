@@ -47,6 +47,31 @@ export async function createPlaywrightSession(opts: CreatePlaywrightSessionOpts)
   return { browser, context, page, video, videoDir };
 }
 
+export async function createPlaywrightSessionFromCdp(opts: {
+  cdpUrl: string;
+  viewport: { width: number; height: number };
+  enableTracing: boolean;
+}): Promise<PlaywrightSession> {
+  const { chromium } = await import("@playwright/test");
+
+  const browser = await chromium.connectOverCDP(opts.cdpUrl);
+  const context = browser.contexts()[0] ?? (await browser.newContext());
+  const page = context.pages()[0] ?? (await context.newPage());
+
+  // Best-effort normalize viewport for screenshots.
+  try {
+    await page.setViewportSize(opts.viewport);
+  } catch {
+    // ignore
+  }
+
+  if (opts.enableTracing) {
+    await context.tracing.start({ screenshots: true, snapshots: true, sources: true });
+  }
+
+  return { browser, context, page, video: null, videoDir: undefined };
+}
+
 export async function closePlaywrightSession(
   session: PlaywrightSession,
 ): Promise<{ videoWebmPath?: string }> {

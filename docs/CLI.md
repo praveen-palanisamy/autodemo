@@ -2,6 +2,7 @@
 
 All commands support:
 - `--config <path>`: path to `.autodemo.yml` (default: `./.autodemo.yml`)
+- `--tui`: force Ink UI (useful if your environment doesn't report TTY correctly)
 - `--no-tui`: disable Ink UI (auto-enabled in CI / non-TTY)
 - `--json`: machine-readable JSON output (implies `--no-tui`)
 
@@ -40,6 +41,7 @@ Options:
 - `--url <url>`: override base URL
 - `--outDir <dir>`: override output directory base
 - `--headless`: force headless browser
+- `--headed` / `--headful`: force headed (non-headless) browser
 - `--debug`: save `trace.zip` even on success
 
 #### `autodemo doctor`

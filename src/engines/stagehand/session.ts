@@ -1,39 +1,51 @@
-import { AvailableModelSchema, Stagehand, type AvailableModel, type Page as StagehandPage } from "@browserbasehq/stagehand";
-import type { Page } from "@playwright/test";
+import type { ModelConfiguration, Stagehand, V3Env, V3Options } from "@browserbasehq/stagehand";
 
 export type StagehandSession = {
   stagehand: Stagehand;
+  cdpUrl: string;
 };
 
 export type CreateStagehandSessionOpts = {
-  // If Stagehand supports binding to an existing Playwright page, we pass it through.
-  page?: Page;
+  env: V3Env;
   browserbaseApiKey?: string;
-  env: "LOCAL" | "BROWSERBASE";
+  headless: boolean;
+  viewport: { width: number; height: number };
   modelName?: string;
+  llmProvider?: string;
+  llmApiKey?: string;
 };
 
 export async function createStagehandSession(opts: CreateStagehandSessionOpts): Promise<StagehandSession> {
-  const modelName: AvailableModel | undefined = opts.modelName
-    ? AvailableModelSchema.safeParse(opts.modelName).success
-      ? (opts.modelName as AvailableModel)
-      : undefined
+  // Dynamic import so Playwright-only scenarios can run even if Stagehand has runtime constraints.
+  const { Stagehand: StagehandCtor } = await import("@browserbasehq/stagehand");
+
+  const model: ModelConfiguration | undefined = opts.modelName
+    ? opts.llmApiKey
+      ? ({
+          modelName: opts.modelName,
+          apiKey: opts.llmApiKey,
+          provider: opts.llmProvider,
+        } as unknown as ModelConfiguration)
+      : (opts.modelName as ModelConfiguration)
     : undefined;
 
-  const stagehand = new Stagehand({
+  const stagehandOpts: V3Options = {
     env: opts.env,
     ...(opts.browserbaseApiKey ? { apiKey: opts.browserbaseApiKey } : {}),
-    ...(modelName ? { modelName } : {}),
-  });
+    ...(model ? { model } : {}),
+    localBrowserLaunchOptions: {
+      headless: opts.headless,
+      viewport: opts.viewport,
+    },
+    disablePino: true,
+  };
 
-  if (opts.page) {
-    // Deprecated in Stagehand v1.x, but needed to share a single Playwright session with fallback steps.
-    await stagehand.initFromPage({ page: opts.page as unknown as StagehandPage });
-  } else {
-    await stagehand.init();
-  }
+  const stagehand = new StagehandCtor(stagehandOpts);
 
-  return { stagehand };
+  await stagehand.init();
+
+  const cdpUrl = stagehand.connectURL();
+  return { stagehand, cdpUrl };
 }
 
 export async function closeStagehandSession(session: StagehandSession): Promise<void> {

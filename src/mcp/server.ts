@@ -7,7 +7,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 
 import { loadConfig } from "../config/loadConfig.ts";
-import { defaultConfig } from "../config/defaultConfig.ts";
+import { defaultAutodemoYamlTemplate } from "../config/templates/autodemoYaml.ts";
 import { upsertScenarioFromInstruction } from "../scenario/authoring.ts";
 import { runScenario } from "../scenario/runner.ts";
 
@@ -47,7 +47,7 @@ export async function startMcpServer(): Promise<void> {
       },
     },
     async ({ url, instruction, writeTo, name }) => {
-      const cfg = defaultConfig();
+      const cfg = YAML.parse(defaultAutodemoYamlTemplate());
       const updated = upsertScenarioFromInstruction(cfg, {
         name: name ?? "recorded",
         url,

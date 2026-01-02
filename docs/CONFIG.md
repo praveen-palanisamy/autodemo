@@ -66,4 +66,12 @@ Notes:
 - Stagehand’s upstream docs recommend **Node** over Bun for maximum Playwright compatibility; we still run under **Bun** by default.
 - If you run `act` steps, you’ll typically need an LLM provider key (e.g., `OPENAI_API_KEY`) available in your environment.
 
+### `output.clean`
+
+When `output.clean: true`, AutoDemo **deletes the previous output folder for the scenario** before writing a new run:
+
+- `output.dir/<scenario>/latest`
+
+This keeps `latest/` consistent and avoids stale screenshots/videos lingering between runs.
+
 

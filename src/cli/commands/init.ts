@@ -1,20 +1,16 @@
 import path from "node:path";
 import { existsSync } from "node:fs";
 import { writeFile } from "node:fs/promises";
-import YAML from "yaml";
-
 import type { ParsedCli } from "../parse.ts";
 import { ensureDir } from "../../utils/fs.ts";
-import { defaultConfig } from "../../config/defaultConfig.ts";
 import { loadConfig } from "../../config/loadConfig.ts";
+import { defaultAutodemoYamlTemplate } from "../../config/templates/autodemoYaml.ts";
 
 export async function runInit(parsed: ParsedCli): Promise<number> {
   const configPath = parsed.global.configPath ?? path.join(parsed.global.cwd, ".autodemo.yml");
 
   if (!existsSync(configPath)) {
-    const cfg = defaultConfig();
-    const yaml = YAML.stringify(cfg);
-    await writeFile(configPath, yaml, "utf8");
+    await writeFile(configPath, defaultAutodemoYamlTemplate(), "utf8");
   }
 
   const { config } = await loadConfig({ cwd: parsed.global.cwd, configPath });

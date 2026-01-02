@@ -3,8 +3,7 @@ import { existsSync } from "node:fs";
 import { readFile, writeFile } from "node:fs/promises";
 import YAML from "yaml";
 
-import { defaultConfig } from "../../config/defaultConfig.ts";
-import { upsertScenarioFromInstruction } from "../../scenario/authoring.ts";
+import { defaultAutodemoYamlTemplate } from "../../config/templates/autodemoYaml.ts";
 
 export type RecordCoreInput = {
   cwd: string;
@@ -19,17 +18,31 @@ export async function recordCore(input: RecordCoreInput): Promise<{ scenario: st
     ? input.configPath
     : path.join(input.cwd, input.configPath);
 
-  const configObj = existsSync(configPathAbs)
-    ? YAML.parse(await readFile(configPathAbs, "utf8"))
-    : defaultConfig();
+  const yamlText = existsSync(configPathAbs)
+    ? await readFile(configPathAbs, "utf8")
+    : defaultAutodemoYamlTemplate();
 
-  const updated = upsertScenarioFromInstruction(configObj, {
-    name: input.name,
-    url: input.url,
-    instruction: input.instruction,
+  const doc = YAML.parseDocument(yamlText);
+
+  // Fill baseUrl if missing (keep user's value if already set).
+  const baseUrl = doc.getIn(["project", "baseUrl"]);
+  if (!baseUrl) {
+    doc.setIn(["project", "baseUrl"], input.url);
+  }
+
+  if (!doc.get("scenarios")) {
+    doc.set("scenarios", {});
+  }
+
+  doc.setIn(["scenarios", input.name], {
+    description: `Recorded: ${input.instruction}`,
+    steps: [
+      { type: "goto", url: "/" },
+      { type: "act", instruction: input.instruction },
+    ],
   });
 
-  await writeFile(configPathAbs, YAML.stringify(updated), "utf8");
+  await writeFile(configPathAbs, doc.toString(), "utf8");
   return { scenario: input.name, configPath: configPathAbs };
 }
 

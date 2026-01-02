@@ -1,7 +1,11 @@
 import path from "node:path";
 
 import type { AutoDemoConfig, ScenarioStep } from "../config/schema.ts";
-import { createPlaywrightSession, closePlaywrightSession } from "../engines/playwright/session.ts";
+import {
+  createPlaywrightSession,
+  createPlaywrightSessionFromCdp,
+  closePlaywrightSession,
+} from "../engines/playwright/session.ts";
 import { executePlaywrightStep } from "../engines/playwright/execute.ts";
 import { createStagehandSession, closeStagehandSession } from "../engines/stagehand/session.ts";
 import { executeStagehandStep } from "../engines/stagehand/execute.ts";
@@ -49,28 +53,39 @@ export async function runScenario(opts: RunScenarioOpts): Promise<RunScenarioRes
 
   const startedAt = new Date().toISOString();
 
-  const session = await createPlaywrightSession({
-    outDir,
-    headless: opts.headless ?? opts.config.browser.headless,
-    viewport: opts.config.browser.viewport,
-    recordVideo: opts.config.browser.recordVideo,
-    enableTracing: true, // needed to export trace on failure
-  });
-
   const needsStagehand = scenario.steps.some((s) => s.type === "act");
   const stagehandApiKey =
     opts.config.stagehand?.mode === "browserbase"
       ? process.env[opts.config.stagehand.browserbaseApiKeyEnv]
       : undefined;
 
+  const headless = opts.headless ?? opts.config.browser.headless;
+
   const stagehandSession = needsStagehand
     ? await createStagehandSession({
-        page: session.page,
-        browserbaseApiKey: stagehandApiKey,
         env: opts.config.stagehand?.mode === "browserbase" ? "BROWSERBASE" : "LOCAL",
+        browserbaseApiKey: stagehandApiKey,
+        headless,
+        viewport: opts.config.browser.viewport,
         modelName: opts.config.llm?.model,
+        llmProvider: opts.config.llm?.provider,
+        llmApiKey: opts.config.llm?.apiKeyEnv ? process.env[opts.config.llm.apiKeyEnv] : undefined,
       })
     : undefined;
+
+  const session = stagehandSession
+    ? await createPlaywrightSessionFromCdp({
+        cdpUrl: stagehandSession.cdpUrl,
+        viewport: opts.config.browser.viewport,
+        enableTracing: true,
+      })
+    : await createPlaywrightSession({
+        outDir,
+        headless,
+        viewport: opts.config.browser.viewport,
+        recordVideo: opts.config.browser.recordVideo,
+        enableTracing: true, // needed to export trace on failure
+      });
 
   const steps: RunJsonStep[] = [];
   let status: RunStatus = "success";
@@ -83,7 +98,7 @@ export async function runScenario(opts: RunScenarioOpts): Promise<RunScenarioRes
     try {
       if (step.type === "act") {
         if (!stagehandSession) throw new Error("Stagehand session not initialized");
-        await executeStagehandStep({ stagehand: stagehandSession.stagehand, step });
+        await executeStagehandStep({ stagehand: stagehandSession.stagehand, page: session.page, step });
       } else {
         await executePlaywrightStep({ page: session.page, baseUrl: opts.baseUrl, step });
       }
@@ -177,11 +192,11 @@ export async function runScenario(opts: RunScenarioOpts): Promise<RunScenarioRes
     }
   }
 
-  if (stagehandSession) {
-    await closeStagehandSession(stagehandSession);
-  }
+  const { videoWebmPath } = await closePlaywrightSession(session).catch(() => ({ videoWebmPath: undefined }));
 
-  const { videoWebmPath } = await closePlaywrightSession(session);
+  if (stagehandSession) {
+    await closeStagehandSession(stagehandSession).catch(() => {});
+  }
   let videoMp4PathRel: string | undefined;
   if (videoWebmPath) {
     // Keep artifact stable by copying/renaming to outDir even if Playwright stores elsewhere.

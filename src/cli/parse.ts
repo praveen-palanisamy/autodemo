@@ -31,9 +31,12 @@ export function parseCli(argvIn: string[]): ParsedCli {
 
   const json = popFlag(argv, "--json");
   const noTuiFlag = popFlag(argv, "--no-tui");
+  const forceTui = popFlag(argv, "--tui");
+  const isCi = process.env.CI === "true" || process.env.CI === "1";
 
   const global: GlobalFlags = {
-    noTui: noTuiFlag || json || !process.stdout.isTTY,
+    // Bun/Node can report isTTY as undefined in some environments; only treat it as non-TTY when explicitly false.
+    noTui: noTuiFlag || json || (!forceTui && (isCi || process.stdout.isTTY === false)),
     json,
     configPath: popOption(argv, "--config"),
     cwd: process.cwd(),

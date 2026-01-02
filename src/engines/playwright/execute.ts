@@ -15,7 +15,19 @@ export async function executePlaywrightStep(opts: {
 
   switch (step.type) {
     case "goto": {
-      await page.goto(resolveUrl(baseUrl, step.url), { waitUntil: "domcontentloaded" });
+      const targetUrl = resolveUrl(baseUrl, step.url);
+      try {
+        await page.goto(targetUrl, { waitUntil: "domcontentloaded" });
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        if (msg.includes("ERR_CONNECTION_REFUSED") || msg.includes("ECONNREFUSED")) {
+          throw new Error(
+            `goto: could not connect to ${targetUrl}. Is your app running? ` +
+              `Start it (e.g. Next.js: \`bunx next dev --turbo\`) or pass \`--url\` / set project.baseUrl.`,
+          );
+        }
+        throw err;
+      }
       return;
     }
     case "click": {

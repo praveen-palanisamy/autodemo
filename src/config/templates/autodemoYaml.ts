@@ -1,0 +1,51 @@
+export function defaultAutodemoYamlTemplate(): string {
+  // Keep this human-first. This file is intended to be edited by developers.
+  return `# AutoDemo configuration
+#
+# Quick start:
+# - Start your app (e.g. Next.js): \`bunx next dev --turbo\`
+# - Run a scenario: \`bunx autodemo run signup --url http://localhost:3000\`
+#
+# Notes:
+# - output.clean: true deletes the previous \`<output.dir>/<scenario>/latest\` folder before writing new artifacts.
+# - type: act steps require an LLM API key (e.g. OPENAI_API_KEY) and Stagehand config.
+
+project:
+  name: MyApp
+  # baseUrl must point at a RUNNING app.
+  # For Next.js default dev server: http://localhost:3000
+  baseUrl: http://localhost:3000
+
+output:
+  # Where demo artifacts are written.
+  # For Next.js, putting this under \`public/\` makes it easy to serve.
+  dir: public/demos
+  # If true, clean the scenario's output folder before writing a new run.
+  clean: true
+
+browser:
+  # headless: true is best for CI; set false to watch the browser locally.
+  headless: true
+  viewport: { width: 1440, height: 900 }
+  # recordVideo:
+  # - when true, AutoDemo will attempt to write video.mp4 (requires ffmpeg).
+  # - note: some engines/connection modes may fall back to screenshots-only.
+  recordVideo: false
+
+# Stagehand is used for \`type: act\` steps (LLM-native).
+llm:
+  provider: openai # openai | anthropic | ollama
+  model: gpt-4o-mini
+  apiKeyEnv: OPENAI_API_KEY
+
+stagehand:
+  mode: local # local | browserbase
+  browserbaseApiKeyEnv: BROWSERBASE_API_KEY
+
+# Add your scenarios here.
+# Tip: Use \`autodemo record\` to generate a starter scenario from an instruction.
+scenarios: {}
+`;
+}
+
+
