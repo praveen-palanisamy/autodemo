@@ -17,6 +17,12 @@ export function defaultConfig(): Record<string, unknown> {
       headless: false,
       viewport: { width: 1440, height: 900 },
       recordVideo: false,
+      cursor: {
+        showCursor: true,
+        style: "arrow",
+        highlightClicks: true,
+        clickRadius: 24,
+      },
     },
     stagehand: {
       mode: "local",

@@ -6,6 +6,7 @@ import YAML from "yaml";
 import { defaultAutodemoYamlTemplate } from "../config/templates/autodemoYaml.ts";
 import { ScenarioStep } from "../config/schema.ts";
 import { installCursorOverlay } from "../utils/cursorOverlay.ts";
+import { addRecordingBanner } from "../utils/recordingBanner.ts";
 
 type RecordInput = {
   url: string;
@@ -76,6 +77,14 @@ export async function recordScenario(input: RecordInput): Promise<void> {
     // best-effort
   }
 
+  try {
+    await addRecordingBanner(page, {
+      message: "Recording with autodemo — close the browser window to save",
+    });
+  } catch {
+    // best-effort
+  }
+
   // Expose binding to capture events from browser
   await page.exposeFunction(
     "__logAction",
@@ -92,7 +101,7 @@ export async function recordScenario(input: RecordInput): Promise<void> {
 
   console.log(`Recording scenario '${input.name}'...`);
   console.log(`Navigate to ${input.url} and interact.`);
-  console.log("Close the browser window to save and exit.");
+  console.log("Close the browser window to save and exit. (Recording stays open until you close it.)");
 
   try {
     await page.goto(input.url);

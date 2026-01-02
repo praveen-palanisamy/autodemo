@@ -40,6 +40,10 @@ browser:
     highlightClicks: true
     # Ring size in px
     clickRadius: 24
+# Hints:
+# - Interactive record: bun run dev -- record --interactive --url http://localhost:3000 --name signup
+#   Close the opened browser window to save your recording.
+# - Non-interactive record (LLM act): bun run dev -- record --url http://localhost:3000 --instruction "..." --name signup
 
 # Stagehand is used for \`type: act\` steps (LLM-native).
 llm:
