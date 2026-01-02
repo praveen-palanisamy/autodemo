@@ -1,4 +1,4 @@
-import type { Page } from "@playwright/test";
+import type { Page, Locator } from "@playwright/test";
 import type { ScenarioStep } from "../../config/schema.ts";
 import { resolveUrl } from "../../utils/url.ts";
 
@@ -12,6 +12,8 @@ export async function executePlaywrightStep(opts: {
   step: ScenarioStep;
 }): Promise<void> {
   const { page, baseUrl, step } = opts;
+
+  const locatorFor = (selector: string): Locator => page.locator(selector).first();
 
   async function moveCursor(x: number, y: number, highlight: boolean) {
     try {
@@ -35,7 +37,7 @@ export async function executePlaywrightStep(opts: {
   }
 
   async function moveToSelectorCenter(selector: string, highlight: boolean) {
-    const box = await page.locator(selector).boundingBox();
+    const box = await locatorFor(selector).boundingBox();
     if (!box) return;
     const x = box.x + box.width / 2;
     const y = box.y + box.height / 2;
@@ -60,35 +62,41 @@ export async function executePlaywrightStep(opts: {
       return;
     }
     case "click": {
+      const loc = locatorFor(step.selector);
       await moveToSelectorCenter(step.selector, true);
-      await page.click(step.selector);
+      await loc.click();
       return;
     }
     case "fill": {
+      const loc = locatorFor(step.selector);
       await moveToSelectorCenter(step.selector, false);
-      await page.fill(step.selector, step.value);
+      await loc.fill(step.value);
       return;
     }
     case "hover": {
+      const loc = locatorFor(step.selector);
       await moveToSelectorCenter(step.selector, false);
-      await page.hover(step.selector);
+      await loc.hover();
       return;
     }
     case "press": {
       if (step.selector) {
+        const loc = locatorFor(step.selector);
         await moveToSelectorCenter(step.selector, false);
-        await page.click(step.selector);
+        await loc.click();
       }
       await page.keyboard.press(step.key);
       return;
     }
     case "select": {
+      const loc = locatorFor(step.selector);
       await moveToSelectorCenter(step.selector, false);
-      await page.selectOption(step.selector, step.values.map((v) => ({ value: v })));
+      await loc.selectOption(step.values.map((v) => ({ value: v })));
       return;
     }
     case "waitForSelector": {
-      await page.waitForSelector(step.selector, { timeout: step.timeoutMs });
+      const loc = locatorFor(step.selector);
+      await loc.waitFor({ state: "visible", timeout: step.timeoutMs });
       return;
     }
     case "waitFor": {

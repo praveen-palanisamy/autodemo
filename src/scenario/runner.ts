@@ -16,6 +16,7 @@ import { convertWebmToMp4, isFfmpegAvailable } from "../output/video.ts";
 import { ensureDir, rmrf } from "../utils/fs.ts";
 import { installCursorOverlay } from "../utils/cursorOverlay.ts";
 import { appendFile } from "node:fs/promises";
+import { mkdir } from "node:fs/promises";
 
 export type RunScenarioOpts = {
   config: AutoDemoConfig;
@@ -115,7 +116,7 @@ export async function runScenario(opts: RunScenarioOpts): Promise<RunScenarioRes
   const transitionMs = opts.config.browser.transitions?.transitionMs ?? 800;
   const endPauseMs = opts.config.browser.transitions?.endPauseMs ?? 1200;
   const logsDir = path.join(process.cwd(), "logs");
-  await ensureDir(logsDir);
+  await mkdir(logsDir, { recursive: true });
   const logPath = path.join(logsDir, `${Date.now()}_${opts.scenarioName}.log`);
 
   for (let i = 0; i < scenario.steps.length; i++) {
