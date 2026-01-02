@@ -86,23 +86,19 @@ const OVERLAY_SCRIPT = `
 
 export async function installCursorOverlay(page: Page, opts: CursorOptions): Promise<void> {
   if (!opts.showCursor) return;
-  await page.addInitScript(`
+  const script = `
     window.__autodemoClickRadius = ${opts.clickRadius};
     window.__autodemoHighlightClicks = ${opts.highlightClicks};
     ${OVERLAY_SCRIPT}
     const cursor = document.getElementById("__autodemo-cursor");
     if (cursor) {
       cursor.style.cursor = "${opts.style === "hand" ? "pointer" : "default"}";
+      cursor.style.display = "block";
     }
-  `);
-  // Apply immediately on current document
-  await page.evaluate(
-    ({ style }) => {
-      const cursor = document.getElementById("__autodemo-cursor");
-      if (cursor) cursor.style.cursor = style === "hand" ? "pointer" : "default";
-    },
-    { style: opts.style },
-  );
+  `;
+  await page.addInitScript(script);
+  // Apply immediately on the current document so the first page also gets the overlay.
+  await page.evaluate(script);
 }
 
 

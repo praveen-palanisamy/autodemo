@@ -56,7 +56,8 @@ export async function runScenario(opts: RunScenarioOpts): Promise<RunScenarioRes
   await ensureDir(outDir);
   await ensureDir(stepsDir(outDir));
 
-  const startedAt = new Date().toISOString();
+  const startedAtMs = Date.now();
+  const startedAt = new Date(startedAtMs).toISOString();
 
   const needsStagehand = scenario.steps.some((s) => s.type === "act");
   const stagehandApiKey =
@@ -121,7 +122,8 @@ export async function runScenario(opts: RunScenarioOpts): Promise<RunScenarioRes
 
   for (let i = 0; i < scenario.steps.length; i++) {
     const step = scenario.steps[i] as ScenarioStep;
-    const stepStartedAt = new Date().toISOString();
+    const stepStartedMs = Date.now();
+    const stepStartedAt = new Date(stepStartedMs).toISOString();
 
     try {
       if (step.type === "act") {
@@ -153,11 +155,15 @@ export async function runScenario(opts: RunScenarioOpts): Promise<RunScenarioRes
         await session.page.waitForTimeout(transitionMs);
       }
 
+      const stepFinishedMs = Date.now();
+      const stepFinishedAt = new Date(stepFinishedMs).toISOString();
       steps.push({
         index: i,
         type: step.type,
         startedAt: stepStartedAt,
-        finishedAt: new Date().toISOString(),
+        finishedAt: stepFinishedAt,
+        offsetMs: stepStartedMs - startedAtMs,
+        durationMs: stepFinishedMs - stepStartedMs,
         status: "success",
         screenshotPath: screenshot?.rel,
         note: step.note,
@@ -191,11 +197,14 @@ export async function runScenario(opts: RunScenarioOpts): Promise<RunScenarioRes
         // ignore
       }
 
+      const stepFinishedMs = Date.now();
       steps.push({
         index: i,
         type: step.type,
         startedAt: stepStartedAt,
-        finishedAt: new Date().toISOString(),
+        finishedAt: new Date(stepFinishedMs).toISOString(),
+        offsetMs: stepStartedMs - startedAtMs,
+        durationMs: stepFinishedMs - stepStartedMs,
         status: "failure",
         screenshotPath: screenshot?.rel,
         note: step.note,
@@ -257,13 +266,15 @@ export async function runScenario(opts: RunScenarioOpts): Promise<RunScenarioRes
   }
 
   const interactiveHtmlAbs = await writeInteractiveHtml(outDir);
-  const finishedAt = new Date().toISOString();
+  const finishedAtMs = Date.now();
+  const finishedAt = new Date(finishedAtMs).toISOString();
 
   const runJson: RunJson = {
     project: { name: opts.config.project.name, baseUrl: opts.baseUrl },
     scenario: { name: opts.scenarioName, description: scenario.description },
     startedAt,
     finishedAt,
+    durationMs: finishedAtMs - startedAtMs,
     status,
     steps,
     artifacts: {
