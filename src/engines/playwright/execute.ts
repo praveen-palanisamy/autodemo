@@ -13,6 +13,35 @@ export async function executePlaywrightStep(opts: {
 }): Promise<void> {
   const { page, baseUrl, step } = opts;
 
+  async function moveCursor(x: number, y: number, highlight: boolean) {
+    try {
+      await page.mouse.move(x, y, { steps: 8 });
+    } catch {
+      // ignore
+    }
+    try {
+      await page.evaluate(
+        ({ x, y, highlight }) => {
+          // @ts-expect-error injected by cursor overlay
+          if (window.__autodemoCursorMove) window.__autodemoCursorMove(x, y);
+          // @ts-expect-error injected by cursor overlay
+          if (highlight && window.__autodemoClickRing) window.__autodemoClickRing(x, y);
+        },
+        { x, y, highlight },
+      );
+    } catch {
+      // ignore
+    }
+  }
+
+  async function moveToSelectorCenter(selector: string, highlight: boolean) {
+    const box = await page.locator(selector).boundingBox();
+    if (!box) return;
+    const x = box.x + box.width / 2;
+    const y = box.y + box.height / 2;
+    await moveCursor(x, y, highlight);
+  }
+
   switch (step.type) {
     case "goto": {
       const targetUrl = resolveUrl(baseUrl, step.url);
@@ -31,25 +60,30 @@ export async function executePlaywrightStep(opts: {
       return;
     }
     case "click": {
+      await moveToSelectorCenter(step.selector, true);
       await page.click(step.selector);
       return;
     }
     case "fill": {
+      await moveToSelectorCenter(step.selector, false);
       await page.fill(step.selector, step.value);
       return;
     }
     case "hover": {
+      await moveToSelectorCenter(step.selector, false);
       await page.hover(step.selector);
       return;
     }
     case "press": {
       if (step.selector) {
+        await moveToSelectorCenter(step.selector, false);
         await page.click(step.selector);
       }
       await page.keyboard.press(step.key);
       return;
     }
     case "select": {
+      await moveToSelectorCenter(step.selector, false);
       await page.selectOption(step.selector, step.values.map((v) => ({ value: v })));
       return;
     }

@@ -109,6 +109,8 @@ export async function runScenario(opts: RunScenarioOpts): Promise<RunScenarioRes
   const steps: RunJsonStep[] = [];
   let status: RunStatus = "success";
   let traceZipPathRel: string | undefined;
+  const transitionMs = opts.config.browser.transitions?.transitionMs ?? 800;
+  const endPauseMs = opts.config.browser.transitions?.endPauseMs ?? 1200;
 
   for (let i = 0; i < scenario.steps.length; i++) {
     const step = scenario.steps[i] as ScenarioStep;
@@ -139,6 +141,10 @@ export async function runScenario(opts: RunScenarioOpts): Promise<RunScenarioRes
           : step.type === "press"
             ? step.selector
             : undefined;
+
+      if (transitionMs > 0) {
+        await session.page.waitForTimeout(transitionMs);
+      }
 
       steps.push({
         index: i,
@@ -206,6 +212,14 @@ export async function runScenario(opts: RunScenarioOpts): Promise<RunScenarioRes
     // Stop tracing without saving to keep output small.
     try {
       await session.context.tracing.stop();
+    } catch {
+      // ignore
+    }
+  }
+
+  if (endPauseMs > 0) {
+    try {
+      await session.page.waitForTimeout(endPauseMs);
     } catch {
       // ignore
     }

@@ -40,6 +40,11 @@ browser:
     highlightClicks: true
     # Ring size in px
     clickRadius: 24
+  transitions:
+    # Delay after each step so the UI/cursor is visible in captures.
+    transitionMs: 800
+    # Extra pause after the final step (keeps video from ending abruptly).
+    endPauseMs: 1200
 # Hints:
 # - Interactive record: bun run dev -- record --interactive --url http://localhost:3000 --name signup
 #   Close the opened browser window to save your recording.

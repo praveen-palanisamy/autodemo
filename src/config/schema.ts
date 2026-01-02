@@ -103,6 +103,17 @@ const CursorSchema = z.object({
   clickRadius: z.number().int().positive().default(24),
 });
 
+const TransitionsSchema = z.object({
+  /**
+   * Delay after each step to let UI settle and keep the cursor visible in captures.
+   */
+  transitionMs: z.number().int().positive().default(800),
+  /**
+   * Extra pause after the final step before finishing (for video tail).
+   */
+  endPauseMs: z.number().int().positive().default(1200),
+});
+
 export const ScenarioStepSchema = z.discriminatedUnion("type", [
   StepGotoSchema,
   StepActSchema,
@@ -149,6 +160,7 @@ export const AutoDemoConfigSchema = z.object({
       viewport: ViewportSchema.default({ width: 1440, height: 900 }),
       recordVideo: z.boolean().default(false),
       cursor: CursorSchema.default({}),
+      transitions: TransitionsSchema.default({}),
     })
     .default({}),
   stagehand: z

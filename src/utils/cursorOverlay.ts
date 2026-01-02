@@ -46,11 +46,10 @@ const OVERLAY_SCRIPT = `
     cursor.style.display = "block";
   }
   document.addEventListener("mousemove", setCursor, true);
-  document.addEventListener("mousedown", (e) => {
+  function showRing(x, y) {
     if (!window.__autodemoHighlightClicks) return;
-    setCursor(e);
-    ring.style.left = e.clientX + "px";
-    ring.style.top = e.clientY + "px";
+    ring.style.left = x + "px";
+    ring.style.top = y + "px";
     ring.style.display = "block";
     const baseRadius = window.__autodemoClickRadius || 24;
     ring.style.width = baseRadius * 2 + "px";
@@ -66,7 +65,22 @@ const OVERLAY_SCRIPT = `
         ring.style.display = "none";
       }, 200);
     }, 120);
+  }
+
+  document.addEventListener("mousemove", setCursor, true);
+  document.addEventListener("mousedown", (e) => {
+    setCursor(e);
+    showRing(e.clientX, e.clientY);
   }, true);
+
+  window.__autodemoCursorMove = function(x, y) {
+    cursor.style.left = x + "px";
+    cursor.style.top = y + "px";
+    cursor.style.display = "block";
+  };
+  window.__autodemoClickRing = function(x, y) {
+    showRing(x, y);
+  };
 })();
 `;
 

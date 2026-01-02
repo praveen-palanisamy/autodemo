@@ -23,6 +23,10 @@ export function defaultConfig(): Record<string, unknown> {
         highlightClicks: true,
         clickRadius: 24,
       },
+      transitions: {
+        transitionMs: 800,
+        endPauseMs: 1200,
+      },
     },
     stagehand: {
       mode: "local",
