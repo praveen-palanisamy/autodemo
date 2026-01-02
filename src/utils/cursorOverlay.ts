@@ -14,12 +14,12 @@ const OVERLAY_SCRIPT = `
   const cursor = document.createElement("div");
   cursor.id = "__autodemo-cursor";
   cursor.style.position = "fixed";
-  cursor.style.width = "20px";
-  cursor.style.height = "20px";
+  cursor.style.width = "24px";
+  cursor.style.height = "24px";
   cursor.style.borderRadius = "50%";
-  cursor.style.border = "2px solid rgba(0,0,0,0.5)";
-  cursor.style.background = "rgba(255,255,255,0.8)";
-  cursor.style.boxShadow = "0 0 8px rgba(0,0,0,0.2)";
+  cursor.style.border = "2px solid rgba(0,118,255,0.9)";
+  cursor.style.background = "rgba(255,255,255,0.95)";
+  cursor.style.boxShadow = "0 0 10px rgba(0,0,0,0.25)";
   cursor.style.pointerEvents = "none";
   cursor.style.zIndex = "2147483647";
   cursor.style.transform = "translate(-50%, -50%)";
@@ -51,20 +51,20 @@ const OVERLAY_SCRIPT = `
     ring.style.left = x + "px";
     ring.style.top = y + "px";
     ring.style.display = "block";
-    const baseRadius = window.__autodemoClickRadius || 24;
+    const baseRadius = window.__autodemoClickRadius || 28;
     ring.style.width = baseRadius * 2 + "px";
     ring.style.height = baseRadius * 2 + "px";
-    ring.style.borderColor = window.__autodemoClickColor || "rgba(0, 122, 255, 0.6)";
+    ring.style.borderColor = window.__autodemoClickColor || "rgba(0, 122, 255, 0.8)";
     ring.style.opacity = "1";
-    ring.style.transition = "transform 200ms ease-out, opacity 300ms ease-out";
-    ring.style.transform = "translate(-50%, -50%) scale(1.2)";
+    ring.style.transition = "transform 240ms ease-out, opacity 420ms ease-out";
+    ring.style.transform = "translate(-50%, -50%) scale(1.35)";
     clearTimeout(ringTimeout);
     ringTimeout = setTimeout(() => {
       ring.style.opacity = "0";
       ringTimeout = setTimeout(() => {
         ring.style.display = "none";
-      }, 200);
-    }, 120);
+      }, 250);
+    }, 420);
   }
 
   document.addEventListener("mousemove", setCursor, true);
@@ -99,6 +99,15 @@ export async function installCursorOverlay(page: Page, opts: CursorOptions): Pro
   await page.addInitScript(script);
   // Apply immediately on the current document so the first page also gets the overlay.
   await page.evaluate(script);
+  page.on("framenavigated", async (frame) => {
+    if (frame === page.mainFrame()) {
+      try {
+        await page.evaluate(script);
+      } catch {
+        // ignore
+      }
+    }
+  });
 }
 
 
