@@ -20,6 +20,8 @@ export function defaultConfig(): Record<string, unknown> {
       cursor: {
         showCursor: true,
         style: "arrow",
+        pointerColor: "#0076FF",
+        clickColor: "#0076FF",
         highlightClicks: true,
         clickRadius: 24,
       },

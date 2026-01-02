@@ -25,4 +25,5 @@ test-results/
 # AutoDemo generated artifacts (tool output)
 .autodemo-out/
 .autodemo.yml
+*.autodemo.yml
 public/demos/

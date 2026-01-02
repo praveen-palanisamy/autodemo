@@ -104,6 +104,8 @@ export async function runScenario(opts: RunScenarioOpts): Promise<RunScenarioRes
     await installCursorOverlay(session.page, {
       showCursor: cursorOpts.showCursor ?? true,
       style: (cursorOpts.style as "arrow" | "hand") ?? "arrow",
+      pointerColor: cursorOpts.pointerColor,
+      clickColor: cursorOpts.clickColor,
       highlightClicks: cursorOpts.highlightClicks ?? true,
       clickRadius: cursorOpts.clickRadius ?? 24,
     });

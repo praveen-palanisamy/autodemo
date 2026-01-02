@@ -2,11 +2,11 @@ import { chromium } from "@playwright/test";
 import path from "node:path";
 import { readFile, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
-import YAML from "yaml";
 import { defaultAutodemoYamlTemplate } from "../config/templates/autodemoYaml.ts";
 import { ScenarioStep } from "../config/schema.ts";
 import { installCursorOverlay } from "../utils/cursorOverlay.ts";
 import { addRecordingBanner } from "../utils/recordingBanner.ts";
+import { mergeScenarioIntoYaml } from "./yamlMerge.ts";
 
 type RecordInput = {
   url: string;
@@ -103,16 +103,24 @@ export async function recordScenario(input: RecordInput): Promise<void> {
   console.log(`Navigate to ${input.url} and interact.`);
   console.log("Close the browser window to save and exit. (Recording stays open until you close it.)");
 
+  let gotoOk = false;
   try {
     await page.goto(input.url);
+    gotoOk = true;
     // Wait until browser is closed (page, context, or browser disconnect).
     await Promise.race([
       page.waitForEvent("close").catch(() => {}),
       context.waitForEvent("close").catch(() => {}),
       new Promise<void>((resolve) => browser.once("disconnected", () => resolve())),
     ]);
-  } catch {
-    // ignore
+  } catch (err) {
+    console.error(`Failed to navigate to ${input.url}: ${err instanceof Error ? err.message : String(err)}`);
+    console.error("Keeping the browser open — you can manually navigate. Close the browser window to save.");
+    await Promise.race([
+      page.waitForEvent("close").catch(() => {}),
+      context.waitForEvent("close").catch(() => {}),
+      new Promise<void>((resolve) => browser.once("disconnected", () => resolve())),
+    ]);
   } finally {
     try {
       await browser.close();
@@ -130,24 +138,17 @@ export async function recordScenario(input: RecordInput): Promise<void> {
     ? await readFile(configPathAbs, "utf8")
     : defaultAutodemoYamlTemplate();
 
-  const doc = YAML.parseDocument(yamlText);
-
-  // Set baseUrl if missing
-  const currentBaseUrl = doc.getIn(["project", "baseUrl"]);
-  if (!currentBaseUrl) {
-    doc.setIn(["project", "baseUrl"], input.url);
-  }
-
-  if (!doc.get("scenarios")) {
-    doc.set("scenarios", {});
-  }
-
-  doc.setIn(["scenarios", input.name], {
-    description: `Recorded interactively`,
+  const merged = mergeScenarioIntoYaml({
+    yamlText,
+    scenarioName: input.name,
+    description: `Recorded interactively${gotoOk ? "" : " (manual navigation)"}`,
     steps,
+    baseUrl: input.url,
   });
 
-  await writeFile(configPathAbs, doc.toString(), "utf8");
-  console.log(`Saved scenario '${input.name}' to ${input.configPath}`);
+  await writeFile(configPathAbs, merged.yamlText, "utf8");
+  console.log(
+    `Saved scenario '${merged.scenarioName}' to ${input.configPath}${merged.reusedConfig ? " (reused existing config)" : ""}`,
+  );
 }
 

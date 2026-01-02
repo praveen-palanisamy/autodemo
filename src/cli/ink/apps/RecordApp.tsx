@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Box, Text, useInput } from "ink";
+import { existsSync } from "node:fs";
+import path from "node:path";
 import { recordScenario } from "../../../recording/recorder.ts";
 
 type Props = {
@@ -9,7 +11,7 @@ type Props = {
   initialValues?: { url?: string; name?: string };
 };
 
-type Step = "url" | "name" | "configPath" | "record" | "done" | "error";
+type Step = "url" | "name" | "configPath" | "confirmReuse" | "record" | "done" | "error";
 
 export function RecordApp({ cwd, defaultConfigPath, onDone, initialValues }: Props) {
   const [step, setStep] = useState<Step>(initialValues?.url ? (initialValues?.name ? "configPath" : "name") : "url");
@@ -18,6 +20,8 @@ export function RecordApp({ cwd, defaultConfigPath, onDone, initialValues }: Pro
   const [name, setName] = useState(initialValues?.name || "recorded");
   const [configPath, setConfigPath] = useState(defaultConfigPath);
   const [message, setMessage] = useState<string | null>(null);
+  const [reuseConfirmed, setReuseConfirmed] = useState(false);
+  const [configExists, setConfigExists] = useState(false);
 
   useEffect(() => {
     if (step === "name") setBuffer(name);
@@ -32,6 +36,16 @@ export function RecordApp({ cwd, defaultConfigPath, onDone, initialValues }: Pro
 
     if (step === "record") {
       // Ignore typing while recording.
+      return;
+    }
+
+    if (step === "confirmReuse") {
+      if (input === "y" || input === "Y" || key.return) {
+        setReuseConfirmed(true);
+        setStep("record");
+      } else if (input === "n" || input === "N" || input === "q" || input === "Q") {
+        onDone(2);
+      }
       return;
     }
 
@@ -51,7 +65,16 @@ export function RecordApp({ cwd, defaultConfigPath, onDone, initialValues }: Pro
       }
       if (step === "configPath") {
         setConfigPath(value || defaultConfigPath);
-        setStep("record");
+        const abs = path.isAbsolute(value || defaultConfigPath)
+          ? value || defaultConfigPath
+          : path.join(cwd, value || defaultConfigPath);
+        const exists = existsSync(abs);
+        setConfigExists(exists);
+        if (exists && !reuseConfirmed) {
+          setStep("confirmReuse");
+        } else {
+          setStep("record");
+        }
         return;
       }
     }
@@ -74,7 +97,9 @@ export function RecordApp({ cwd, defaultConfigPath, onDone, initialValues }: Pro
     (async () => {
       try {
         if (!url) throw new Error("URL is required");
-        setMessage("Launching browser…\nClose the browser window to finish recording.");
+        setMessage(
+          `Launching browser…\n${configExists ? `Reusing config: ${configPath}\n` : ""}Close the browser window to finish recording.`,
+        );
         await recordScenario({ cwd, url, name, configPath });
         setMessage(`Saved scenario '${name}' to ${configPath}`);
         setStep("done");
@@ -92,6 +117,8 @@ export function RecordApp({ cwd, defaultConfigPath, onDone, initialValues }: Pro
         ? "Scenario name"
         : step === "configPath"
           ? "Write to config path"
+          : step === "confirmReuse"
+            ? null
           : null;
 
   return (
@@ -110,6 +137,13 @@ export function RecordApp({ cwd, defaultConfigPath, onDone, initialValues }: Pro
         <Box flexDirection="column">
           <Text>{message}</Text>
           <Text dimColor>Interact with the browser to capture steps.</Text>
+        </Box>
+      ) : step === "confirmReuse" ? (
+        <Box flexDirection="column">
+          <Text color="yellow">Config already exists: {configPath}</Text>
+          <Text dimColor>
+            Continue and append scenario(s) to this file? (y/N)
+          </Text>
         </Box>
       ) : step === "done" ? (
         <Box flexDirection="column">

@@ -36,6 +36,10 @@ browser:
     showCursor: true
     # Options: arrow | hand
     style: arrow
+    # Hex color for the pointer icon (e.g. #0076FF)
+    pointerColor: "#0076FF"
+    # Hex color for click ring highlight
+    clickColor: "#0076FF"
     # Show a click highlight ring
     highlightClicks: true
     # Ring size in px

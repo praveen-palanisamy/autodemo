@@ -99,6 +99,14 @@ const StepSleepSchema = z.object({
 const CursorSchema = z.object({
   showCursor: z.boolean().default(true),
   style: z.enum(["arrow", "hand"]).default("arrow"),
+  pointerColor: z
+    .string()
+    .regex(/^#[0-9a-fA-F]{6}$/)
+    .default("#0076FF"),
+  clickColor: z
+    .string()
+    .regex(/^#[0-9a-fA-F]{6}$/)
+    .default("#0076FF"),
   highlightClicks: z.boolean().default(true),
   clickRadius: z.number().int().positive().default(24),
 });
