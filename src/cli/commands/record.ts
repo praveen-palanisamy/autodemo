@@ -1,44 +1,58 @@
-import path from "node:path";
-import { existsSync } from "node:fs";
-import { readFile, writeFile } from "node:fs/promises";
-import YAML from "yaml";
-
 import type { ParsedCli } from "../parse.ts";
 import { popOption, requireOption } from "../argUtils.ts";
-import { defaultConfig } from "../../config/defaultConfig.ts";
-import { upsertScenarioFromInstruction } from "../../scenario/authoring.ts";
+import { shouldUseInk } from "../ink/shouldUseInk.ts";
+import { recordCore } from "../logic/recordCore.ts";
 
-export async function runRecord(parsed: ParsedCli): Promise<void> {
+export async function runRecord(parsed: ParsedCli): Promise<number> {
   const argv = [...parsed.args];
   const url = popOption(argv, "--url");
   const instruction = popOption(argv, "--instruction");
-  const out = popOption(argv, "--out");
+  const out = popOption(argv, "--out") ?? parsed.global.configPath ?? ".autodemo.yml";
   const name = popOption(argv, "--name") ?? "recorded";
+
+  if (shouldUseInk(parsed) && (!url || !instruction)) {
+    const React = (await import("react")).default;
+    const { render } = await import("ink");
+    const { RecordApp } = await import("../ink/apps/RecordApp.tsx");
+
+    return await new Promise<number>((resolve) => {
+      let instance: ReturnType<typeof render> | undefined;
+      const onDone = (code: number) => {
+        try {
+          instance?.unmount();
+        } catch {
+          // ignore
+        }
+        resolve(code);
+      };
+      instance = render(
+        React.createElement(RecordApp, {
+          cwd: parsed.global.cwd,
+          defaultConfigPath: out,
+          onDone,
+        }),
+      );
+    });
+  }
 
   const resolvedUrl = requireOption(url, "--url");
   const resolvedInstruction = requireOption(instruction, "--instruction");
 
-  const configPath = out ?? parsed.global.configPath ?? path.join(parsed.global.cwd, ".autodemo.yml");
-
-  const configObj = existsSync(configPath)
-    ? YAML.parse(await readFile(configPath, "utf8"))
-    : defaultConfig();
-
-  const updated = upsertScenarioFromInstruction(configObj, {
-    name,
+  const res = await recordCore({
+    cwd: parsed.global.cwd,
     url: resolvedUrl,
     instruction: resolvedInstruction,
+    name,
+    configPath: out,
   });
 
-  await writeFile(configPath, YAML.stringify(updated), "utf8");
-
   if (!parsed.global.json) {
-    // eslint-disable-next-line no-console
-    console.log(`Wrote scenario '${name}' to ${configPath}`);
+    console.log(`Wrote scenario '${res.scenario}' to ${res.configPath}`);
   } else {
-    // eslint-disable-next-line no-console
-    console.log(JSON.stringify({ status: "ok", scenario: name, configPath }, null, 2));
+    console.log(JSON.stringify({ status: "ok", scenario: res.scenario, configPath: res.configPath }, null, 2));
   }
+
+  return 0;
 }
 
 

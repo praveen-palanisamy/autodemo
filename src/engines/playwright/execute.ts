@@ -2,6 +2,10 @@ import type { Page } from "@playwright/test";
 import type { ScenarioStep } from "../../config/schema.ts";
 import { resolveUrl } from "../../utils/url.ts";
 
+function assertNever(x: never): never {
+  throw new Error(`Unsupported step: ${JSON.stringify(x)}`);
+}
+
 export async function executePlaywrightStep(opts: {
   page: Page;
   baseUrl: string;
@@ -42,9 +46,7 @@ export async function executePlaywrightStep(opts: {
       return;
     }
     case "waitFor": {
-      const loc =
-        // @ts-expect-error Playwright types differ across versions; keep runtime compatible.
-        typeof page.getByText === "function" ? page.getByText(step.text) : page.locator(`text=${step.text}`);
+      const loc = page.locator(`text=${step.text}`);
       await loc.first().waitFor({ state: "visible", timeout: step.timeoutMs });
       return;
     }
@@ -68,10 +70,8 @@ export async function executePlaywrightStep(opts: {
     // Stagehand-only steps are not executed here.
     case "act":
       throw new Error("Internal error: 'act' step routed to Playwright executor");
-    default: {
-      const exhaustive: never = step;
-      throw new Error(`Unsupported step type: ${(exhaustive as any).type}`);
-    }
+    default:
+      assertNever(step);
   }
 }
 

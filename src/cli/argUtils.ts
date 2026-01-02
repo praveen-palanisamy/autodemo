@@ -1,3 +1,5 @@
+import { CliUsageError } from "./errors.ts";
+
 export function popFlag(argv: string[], flag: string): boolean {
   const idx = argv.indexOf(flag);
   if (idx === -1) return false;
@@ -14,7 +16,9 @@ export function popOption(argv: string[], name: string): string | undefined {
 }
 
 export function requireOption(value: string | undefined, name: string): string {
-  if (!value) throw new Error(`Missing required option: ${name}`);
+  if (!value) {
+    throw new CliUsageError(`Missing required option: ${name}`);
+  }
   return value;
 }
 

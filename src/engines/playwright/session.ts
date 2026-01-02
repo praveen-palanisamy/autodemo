@@ -1,11 +1,13 @@
 import path from "node:path";
 import type { Browser, BrowserContext, Page } from "@playwright/test";
 
+export type PageVideo = ReturnType<Page["video"]>;
+
 export type PlaywrightSession = {
   browser: Browser;
   context: BrowserContext;
   page: Page;
-  video?: any;
+  video?: PageVideo | null;
   videoDir?: string;
 };
 

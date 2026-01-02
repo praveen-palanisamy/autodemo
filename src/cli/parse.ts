@@ -29,9 +29,12 @@ function popOption(argv: string[], name: string): string | undefined {
 export function parseCli(argvIn: string[]): ParsedCli {
   const argv = [...argvIn];
 
+  const json = popFlag(argv, "--json");
+  const noTuiFlag = popFlag(argv, "--no-tui");
+
   const global: GlobalFlags = {
-    noTui: popFlag(argv, "--no-tui"),
-    json: popFlag(argv, "--json"),
+    noTui: noTuiFlag || json || !process.stdout.isTTY,
+    json,
     configPath: popOption(argv, "--config"),
     cwd: process.cwd(),
   };

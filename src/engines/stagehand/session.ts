@@ -1,27 +1,34 @@
+import { AvailableModelSchema, Stagehand, type AvailableModel, type Page as StagehandPage } from "@browserbasehq/stagehand";
+import type { Page } from "@playwright/test";
+
 export type StagehandSession = {
-  stagehand: any;
+  stagehand: Stagehand;
 };
 
 export type CreateStagehandSessionOpts = {
   // If Stagehand supports binding to an existing Playwright page, we pass it through.
-  page?: any;
+  page?: Page;
   browserbaseApiKey?: string;
   env: "LOCAL" | "BROWSERBASE";
   modelName?: string;
 };
 
 export async function createStagehandSession(opts: CreateStagehandSessionOpts): Promise<StagehandSession> {
-  const { Stagehand } = await import("@browserbasehq/stagehand");
+  const modelName: AvailableModel | undefined = opts.modelName
+    ? AvailableModelSchema.safeParse(opts.modelName).success
+      ? (opts.modelName as AvailableModel)
+      : undefined
+    : undefined;
 
   const stagehand = new Stagehand({
     env: opts.env,
     ...(opts.browserbaseApiKey ? { apiKey: opts.browserbaseApiKey } : {}),
-    ...(opts.modelName ? { modelName: opts.modelName as any } : {}),
-  } as any);
+    ...(modelName ? { modelName } : {}),
+  });
 
   if (opts.page) {
     // Deprecated in Stagehand v1.x, but needed to share a single Playwright session with fallback steps.
-    await stagehand.initFromPage({ page: opts.page });
+    await stagehand.initFromPage({ page: opts.page as unknown as StagehandPage });
   } else {
     await stagehand.init();
   }
@@ -30,14 +37,7 @@ export async function createStagehandSession(opts: CreateStagehandSessionOpts): 
 }
 
 export async function closeStagehandSession(session: StagehandSession): Promise<void> {
-  const s = session.stagehand;
-  if (typeof s.close === "function") {
-    await s.close();
-    return;
-  }
-  if (typeof s.dispose === "function") {
-    await s.dispose();
-  }
+  await session.stagehand.close();
 }
 
 

@@ -8,8 +8,7 @@ export type RunningProcess = {
 
 async function waitForHttpOk(url: string, timeoutMs: number): Promise<void> {
   const started = Date.now();
-  // eslint-disable-next-line no-constant-condition
-  while (true) {
+  for (;;) {
     try {
       const res = await fetch(url);
       if (res.ok) return;

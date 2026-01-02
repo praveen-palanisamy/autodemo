@@ -20,10 +20,17 @@ export type RunScenarioOpts = {
   debug?: boolean;
 };
 
+export type ScenarioArtifacts = {
+  interactiveHtml: string;
+  runJson: string;
+  videoMp4?: string;
+  traceZip?: string;
+};
+
 export type RunScenarioResult = {
   status: RunStatus;
   outDir: string;
-  artifacts: { interactiveHtml: string; runJson: string; videoMp4?: string; traceZip?: string };
+  artifacts: ScenarioArtifacts;
   run: RunJson;
 };
 
@@ -86,6 +93,19 @@ export async function runScenario(opts: RunScenarioOpts): Promise<RunScenarioRes
         await session.page.screenshot({ path: screenshot.abs, fullPage: true });
       }
 
+      const selector =
+        step.type === "click" ||
+        step.type === "fill" ||
+        step.type === "hover" ||
+        step.type === "select" ||
+        step.type === "waitForSelector" ||
+        step.type === "expectVisible" ||
+        step.type === "expectText"
+          ? step.selector
+          : step.type === "press"
+            ? step.selector
+            : undefined;
+
       steps.push({
         index: i,
         type: step.type,
@@ -96,11 +116,9 @@ export async function runScenario(opts: RunScenarioOpts): Promise<RunScenarioRes
         note: step.note,
         ...(step.type === "goto" ? { url: step.url } : {}),
         ...(step.type === "act" ? { instruction: step.instruction } : {}),
-        // selector/text are optional; keep minimal for now
-        ...(step.type === "click" || step.type === "fill" || step.type === "hover"
-          ? { selector: (step as any).selector }
-          : {}),
+        ...(selector ? { selector } : {}),
         ...(step.type === "waitFor" ? { text: step.text } : {}),
+        ...(step.type === "expectText" ? { text: step.text } : {}),
       });
     } catch (err) {
       status = "failure";

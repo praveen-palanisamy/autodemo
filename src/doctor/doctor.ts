@@ -11,7 +11,7 @@ export type DoctorReport = {
   checks: DoctorCheck[];
 };
 
-export async function runDoctorChecks(_opts: { cwd: string }): Promise<DoctorReport> {
+export async function runDoctorChecks(): Promise<DoctorReport> {
   const checks: DoctorCheck[] = [];
 
   // ffmpeg

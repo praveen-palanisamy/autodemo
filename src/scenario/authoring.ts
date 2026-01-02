@@ -9,22 +9,24 @@ export type UpsertScenarioInput = {
  * This keeps `record` usable even when Stagehand cannot reliably provide a structured step list.
  */
 export function upsertScenarioFromInstruction(
-  configObj: Record<string, any>,
+  configObj: Record<string, unknown>,
   input: UpsertScenarioInput,
-): Record<string, any> {
-  const cfg = { ...configObj };
+): Record<string, unknown> {
+  const cfg: Record<string, unknown> = { ...configObj };
 
-  cfg.project ??= {};
-  cfg.project.baseUrl ??= input.url;
+  const project = (cfg.project as Record<string, unknown> | undefined) ?? {};
+  if (project.baseUrl === undefined) project.baseUrl = input.url;
+  cfg.project = project;
 
-  cfg.scenarios ??= {};
-  cfg.scenarios[input.name] = {
+  const scenarios = (cfg.scenarios as Record<string, unknown> | undefined) ?? {};
+  scenarios[input.name] = {
     description: `Recorded: ${input.instruction}`,
     steps: [
       { type: "goto", url: "/" },
       { type: "act", instruction: input.instruction },
     ],
   };
+  cfg.scenarios = scenarios;
 
   return cfg;
 }

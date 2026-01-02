@@ -15,7 +15,7 @@ export function printHelp(parsed: ParsedCli): void {
     "  mcp                  Start MCP server over stdio",
     "",
     "Global options:",
-    "  --config <path>   Path to .autodemo.yml (default: ./\.autodemo.yml)",
+    "  --config <path>   Path to .autodemo.yml (default: ./.autodemo.yml)",
     "  --no-tui          Disable Ink UI (recommended in CI)",
     "  --json            Emit structured JSON logs (CI-friendly)",
     "",
@@ -29,10 +29,8 @@ export function printHelp(parsed: ParsedCli): void {
 
   // Keep it simple; avoid Ink for help to keep CI stable.
   if (!parsed.global.json) {
-    // eslint-disable-next-line no-console
     console.log(lines.join("\n"));
   } else {
-    // eslint-disable-next-line no-console
     console.log(JSON.stringify({ help: lines }, null, 2));
   }
 }

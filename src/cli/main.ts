@@ -5,36 +5,40 @@ import { runDoctor } from "./commands/doctor.ts";
 import { runMcp } from "./commands/mcp.ts";
 import { parseCli } from "./parse.ts";
 import { formatCliError, printHelp } from "./ui/help.ts";
+import { CliConfigError, CliUsageError } from "./errors.ts";
 
 export async function main(argv: string[]): Promise<void> {
   const parsed = parseCli(argv);
 
   if (parsed.command === "help" || parsed.command === undefined) {
     printHelp(parsed);
-    process.exit(0);
+    return;
   }
 
   try {
+    let code = 0;
     switch (parsed.command) {
       case "init":
-        await runInit(parsed);
-        return;
+        code = await runInit(parsed);
+        break;
       case "record":
-        await runRecord(parsed);
-        return;
+        code = await runRecord(parsed);
+        break;
       case "run":
-        await runRun(parsed);
-        return;
+        code = await runRun(parsed);
+        break;
       case "doctor":
-        await runDoctor(parsed);
-        return;
+        code = await runDoctor(parsed);
+        break;
       case "mcp":
         await runMcp(parsed);
         return;
       default:
         throw new Error(`Unknown command: ${parsed.command}`);
     }
+    process.exit(code);
   } catch (err) {
+    const isUsage = err instanceof CliUsageError || err instanceof CliConfigError;
     const message = formatCliError(err);
     if (parsed.global.json) {
       // Minimal structured error for CI/automation.
@@ -42,7 +46,7 @@ export async function main(argv: string[]): Promise<void> {
     } else {
       console.error(message);
     }
-    process.exit(1);
+    process.exit(isUsage ? 2 : 1);
   }
 }
 
