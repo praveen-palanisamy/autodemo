@@ -1,7 +1,34 @@
 import type { ParsedCli } from "../parse.ts";
-import { popOption, requireOption } from "../argUtils.ts";
+import { popFlag, popOption, requireOption } from "../argUtils.ts";
 import { shouldUseInk } from "../ink/shouldUseInk.ts";
 import { recordCore } from "../logic/recordCore.ts";
+import { recordScenario } from "../../recording/recorder.ts";
+
+async function runInk(parsed: ParsedCli, initial?: { url?: string; name?: string; configPath?: string }): Promise<number> {
+  const React = (await import("react")).default;
+  const { render } = await import("ink");
+  const { RecordApp } = await import("../ink/apps/RecordApp.tsx");
+
+  return await new Promise<number>((resolve) => {
+    let instance: ReturnType<typeof render> | undefined;
+    const onDone = (code: number) => {
+      try {
+        instance?.unmount();
+      } catch {
+        // ignore
+      }
+      resolve(code);
+    };
+    instance = render(
+      React.createElement(RecordApp, {
+        cwd: parsed.global.cwd,
+        defaultConfigPath: initial?.configPath ?? parsed.global.configPath ?? ".autodemo.yml",
+        initialValues: { url: initial?.url, name: initial?.name },
+        onDone,
+      }),
+    );
+  });
+}
 
 export async function runRecord(parsed: ParsedCli): Promise<number> {
   const argv = [...parsed.args];
@@ -9,30 +36,21 @@ export async function runRecord(parsed: ParsedCli): Promise<number> {
   const instruction = popOption(argv, "--instruction");
   const out = popOption(argv, "--out") ?? parsed.global.configPath ?? ".autodemo.yml";
   const name = popOption(argv, "--name") ?? "recorded";
+  const interactive = popFlag(argv, "--interactive");
 
-  if (shouldUseInk(parsed) && (!url || !instruction)) {
-    const React = (await import("react")).default;
-    const { render } = await import("ink");
-    const { RecordApp } = await import("../ink/apps/RecordApp.tsx");
+  if (shouldUseInk(parsed) && (!url || interactive || !instruction)) {
+    return await runInk(parsed, { url, name, configPath: out });
+  }
 
-    return await new Promise<number>((resolve) => {
-      let instance: ReturnType<typeof render> | undefined;
-      const onDone = (code: number) => {
-        try {
-          instance?.unmount();
-        } catch {
-          // ignore
-        }
-        resolve(code);
-      };
-      instance = render(
-        React.createElement(RecordApp, {
-          cwd: parsed.global.cwd,
-          defaultConfigPath: out,
-          onDone,
-        }),
-      );
+  if (interactive) {
+    const resolvedUrl = requireOption(url, "--url");
+    await recordScenario({
+      cwd: parsed.global.cwd,
+      url: resolvedUrl,
+      name,
+      configPath: out,
     });
+    return 0;
   }
 
   const resolvedUrl = requireOption(url, "--url");

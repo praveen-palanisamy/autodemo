@@ -14,9 +14,14 @@ output:
   clean: true
 
 browser:
-  headless: true
+  headless: false
   viewport: { width: 1440, height: 900 }
   recordVideo: false
+  cursor:
+    showCursor: true
+    style: arrow # arrow | hand
+    highlightClicks: true
+    clickRadius: 24
 
 scenarios:
   signup:
@@ -65,6 +70,14 @@ AutoDemo supports Stagehand steps via `type: act`.
 Notes:
 - Stagehand’s upstream docs recommend **Node** over Bun for maximum Playwright compatibility; we still run under **Bun** by default.
 - If you run `act` steps, you’ll typically need an LLM provider key (e.g., `OPENAI_API_KEY`) available in your environment.
+
+### Cursor overlay (videos/screenshots)
+
+`browser.cursor` controls the custom pointer overlay that is visible in screenshots and videos (headless or headed):
+- `showCursor`: show a synthetic pointer so the cursor is visible in recordings.
+- `style`: `arrow | hand`.
+- `highlightClicks`: draw a ring on click.
+- `clickRadius`: ring radius in px.
 
 ### `output.clean`
 

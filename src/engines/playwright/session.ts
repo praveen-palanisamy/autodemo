@@ -54,7 +54,27 @@ export async function createPlaywrightSessionFromCdp(opts: {
 }): Promise<PlaywrightSession> {
   const { chromium } = await import("@playwright/test");
 
-  const browser = await chromium.connectOverCDP(opts.cdpUrl);
+  const maxMs = 45000;
+  const start = Date.now();
+  let lastErr: unknown;
+  let browser: Browser | undefined;
+
+  while (!browser && Date.now() - start < maxMs) {
+    try {
+      browser = await chromium.connectOverCDP(opts.cdpUrl);
+    } catch (err) {
+      lastErr = err;
+      await new Promise((r) => setTimeout(r, 1000));
+    }
+  }
+
+  if (!browser) {
+    throw new Error(
+      `Failed to connect to Stagehand browser over CDP (${opts.cdpUrl}). ` +
+        `Is Stagehand running and reachable? ${lastErr instanceof Error ? lastErr.message : String(lastErr)}`,
+    );
+  }
+
   const context = browser.contexts()[0] ?? (await browser.newContext());
   const page = context.pages()[0] ?? (await context.newPage());
 

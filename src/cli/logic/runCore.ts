@@ -17,16 +17,12 @@ export async function runCore(parsed: ParsedCli): Promise<RunCoreResult> {
   const urlOverride = popOption(argv, "--url");
   const outDirOverride = popOption(argv, "--outDir");
   const forceHeadless = popFlag(argv, "--headless");
-  const forceHeaded = popFlag(argv, "--headed") || popFlag(argv, "--headful");
   const debug = popFlag(argv, "--debug");
 
   let scenarioName = all ? undefined : argv[0];
   if (scenarioName === "scenario") scenarioName = argv[1];
   if (!all && !scenarioName) {
     throw new Error("Missing scenario name (or pass --all)");
-  }
-  if (forceHeadless && forceHeaded) {
-    throw new Error("Conflicting flags: pass only one of --headless or --headed");
   }
 
   const { config } = await loadConfig({ cwd: parsed.global.cwd, configPath: parsed.global.configPath });
@@ -56,7 +52,7 @@ export async function runCore(parsed: ParsedCli): Promise<RunCoreResult> {
       scenarioName: name,
       baseUrl,
       outputDirBase,
-      headless: forceHeadless ? true : forceHeaded ? false : undefined,
+      headless: forceHeadless ? true : undefined,
       debug,
     });
     results.push({ scenario: name, status: result.status, outDir: result.outDir, artifacts: result.artifacts });

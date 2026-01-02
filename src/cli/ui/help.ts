@@ -23,7 +23,7 @@ export function printHelp(parsed: ParsedCli): void {
     "Run options:",
     "  --url <url>        Override baseUrl",
     "  --outDir <dir>     Override output dir (default: config output.dir)",
-    "  --headless         Force headless browser",
+    "  --headless         Run browser headless (default: headed)",
     "  --debug            Save trace.zip even on success",
     "",
   ];

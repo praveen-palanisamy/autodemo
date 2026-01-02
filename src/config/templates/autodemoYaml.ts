@@ -24,13 +24,22 @@ output:
   clean: true
 
 browser:
-  # headless: true is best for CI; set false to watch the browser locally.
-  headless: true
+  # Default headed so you can see the demo; pass --headless for CI.
+  headless: false
   viewport: { width: 1440, height: 900 }
   # recordVideo:
   # - when true, AutoDemo will attempt to write video.mp4 (requires ffmpeg).
   # - note: some engines/connection modes may fall back to screenshots-only.
   recordVideo: false
+  cursor:
+    # Show custom cursor overlay in videos/screenshots.
+    showCursor: true
+    # Options: arrow | hand
+    style: arrow
+    # Show a click highlight ring
+    highlightClicks: true
+    # Ring size in px
+    clickRadius: 24
 
 # Stagehand is used for \`type: act\` steps (LLM-native).
 llm:

@@ -14,19 +14,20 @@ Creates `.autodemo.yml` if missing and ensures `output.dir` exists.
 
 #### `autodemo record`
 
-Generate/update a scenario from a natural-language instruction.
+Generate/update a scenario from a natural-language instruction **or** record real interactions in a headed browser.
 
-- **Non-interactive**:
+- **Non-interactive (instruction → act step)**:
 
 ```bash
 bun run dev -- record --url http://localhost:3000 --instruction "Sign up and open dashboard" --name signup
 ```
 
-- **Interactive (Ink)**:
+- **Interactive (capture clicks/typing)**:
 
 ```bash
-bun run dev -- record
+bun run dev -- record --interactive --url http://localhost:3000 --name signup
 ```
+You can also omit flags and use the Ink wizard: `bun run dev -- record`
 
 #### `autodemo run`
 
@@ -40,8 +41,7 @@ bun run dev -- run --all --no-tui
 Options:
 - `--url <url>`: override base URL
 - `--outDir <dir>`: override output directory base
-- `--headless`: force headless browser
-- `--headed` / `--headful`: force headed (non-headless) browser
+- `--headless`: force headless browser (default: headed)
 - `--debug`: save `trace.zip` even on success
 
 #### `autodemo doctor`

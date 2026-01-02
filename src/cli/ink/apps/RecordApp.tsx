@@ -1,38 +1,37 @@
 import React, { useEffect, useState } from "react";
 import { Box, Text, useInput } from "ink";
-
-import { recordCore } from "../../logic/recordCore.ts";
+import { recordScenario } from "../../../recording/recorder.ts";
 
 type Props = {
   cwd: string;
   defaultConfigPath: string;
   onDone: (code: number) => void;
+  initialValues?: { url?: string; name?: string };
 };
 
-type Step = "url" | "name" | "instruction" | "configPath" | "writing" | "done" | "error";
+type Step = "url" | "name" | "configPath" | "record" | "done" | "error";
 
-export function RecordApp({ cwd, defaultConfigPath, onDone }: Props) {
-  const [step, setStep] = useState<Step>("url");
+export function RecordApp({ cwd, defaultConfigPath, onDone, initialValues }: Props) {
+  const [step, setStep] = useState<Step>(initialValues?.url ? (initialValues?.name ? "configPath" : "name") : "url");
   const [buffer, setBuffer] = useState("");
-
-  const [url, setUrl] = useState("");
-  const [name, setName] = useState("recorded");
-  const [instruction, setInstruction] = useState("");
+  const [url, setUrl] = useState(initialValues?.url || "");
+  const [name, setName] = useState(initialValues?.name || "recorded");
   const [configPath, setConfigPath] = useState(defaultConfigPath);
-
   const [message, setMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    // Prime buffer with defaults for some steps.
     if (step === "name") setBuffer(name);
     if (step === "configPath") setBuffer(configPath);
-  }, [step]);
+  }, [step, name, configPath]);
 
   useInput((input, key) => {
-    if (step === "writing") return;
-
     if (step === "done" || step === "error") {
       if (key.return || input === "q" || input === "Q") onDone(step === "done" ? 0 : 1);
+      return;
+    }
+
+    if (step === "record") {
+      // Ignore typing while recording.
       return;
     }
 
@@ -46,19 +45,13 @@ export function RecordApp({ cwd, defaultConfigPath, onDone }: Props) {
       }
       if (step === "name") {
         setName(value || "recorded");
-        setBuffer("");
-        setStep("instruction");
-        return;
-      }
-      if (step === "instruction") {
-        setInstruction(value);
         setBuffer(configPath);
         setStep("configPath");
         return;
       }
       if (step === "configPath") {
         setConfigPath(value || defaultConfigPath);
-        setStep("writing");
+        setStep("record");
         return;
       }
     }
@@ -77,31 +70,29 @@ export function RecordApp({ cwd, defaultConfigPath, onDone }: Props) {
   });
 
   useEffect(() => {
-    if (step !== "writing") return;
+    if (step !== "record") return;
     (async () => {
       try {
         if (!url) throw new Error("URL is required");
-        if (!instruction) throw new Error("Instruction is required");
-        const res = await recordCore({ cwd, url, instruction, name, configPath });
-        setMessage(`Wrote scenario '${res.scenario}' to ${res.configPath}`);
+        setMessage("Launching browser…\nClose the browser window to finish recording.");
+        await recordScenario({ cwd, url, name, configPath });
+        setMessage(`Saved scenario '${name}' to ${configPath}`);
         setStep("done");
       } catch (err) {
         setMessage(err instanceof Error ? err.message : String(err));
         setStep("error");
       }
     })();
-  }, [step, cwd, url, instruction, name, configPath, defaultConfigPath]);
+  }, [step, cwd, url, name, configPath]);
 
   const prompt =
     step === "url"
       ? "Base URL (e.g. http://localhost:3000)"
       : step === "name"
         ? "Scenario name"
-        : step === "instruction"
-          ? "Instruction"
-          : step === "configPath"
-            ? "Write to config path"
-            : null;
+        : step === "configPath"
+          ? "Write to config path"
+          : null;
 
   return (
     <Box flexDirection="column" gap={1}>
@@ -115,8 +106,11 @@ export function RecordApp({ cwd, defaultConfigPath, onDone }: Props) {
           </Text>
           <Text dimColor>Press Enter to continue</Text>
         </Box>
-      ) : step === "writing" ? (
-        <Text>Writing…</Text>
+      ) : step === "record" ? (
+        <Box flexDirection="column">
+          <Text>{message}</Text>
+          <Text dimColor>Interact with the browser to capture steps.</Text>
+        </Box>
       ) : step === "done" ? (
         <Box flexDirection="column">
           <Text color="green">{message}</Text>

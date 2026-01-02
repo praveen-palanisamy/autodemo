@@ -45,6 +45,9 @@ export async function createStagehandSession(opts: CreateStagehandSessionOpts): 
   await stagehand.init();
 
   const cdpUrl = stagehand.connectURL();
+  if (!cdpUrl) {
+    throw new Error("Stagehand did not provide a CDP URL after init()");
+  }
   return { stagehand, cdpUrl };
 }
 

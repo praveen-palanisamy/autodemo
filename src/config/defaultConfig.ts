@@ -14,7 +14,7 @@ export function defaultConfig(): Record<string, unknown> {
       apiKeyEnv: "OPENAI_API_KEY",
     },
     browser: {
-      headless: true,
+      headless: false,
       viewport: { width: 1440, height: 900 },
       recordVideo: false,
     },

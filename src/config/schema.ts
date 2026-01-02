@@ -96,6 +96,13 @@ const StepSleepSchema = z.object({
   note: z.string().optional(),
 });
 
+const CursorSchema = z.object({
+  showCursor: z.boolean().default(true),
+  style: z.enum(["arrow", "hand"]).default("arrow"),
+  highlightClicks: z.boolean().default(true),
+  clickRadius: z.number().int().positive().default(24),
+});
+
 export const ScenarioStepSchema = z.discriminatedUnion("type", [
   StepGotoSchema,
   StepActSchema,
@@ -138,9 +145,10 @@ export const AutoDemoConfigSchema = z.object({
     .optional(),
   browser: z
     .object({
-      headless: z.boolean().default(true),
+      headless: z.boolean().default(false),
       viewport: ViewportSchema.default({ width: 1440, height: 900 }),
       recordVideo: z.boolean().default(false),
+      cursor: CursorSchema.default({}),
     })
     .default({}),
   stagehand: z

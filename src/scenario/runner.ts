@@ -14,6 +14,7 @@ import { scenarioLatestDir, stepScreenshotPath, stepsDir } from "../output/paths
 import { writeInteractiveHtml, writeRunJson } from "../output/writeArtifacts.ts";
 import { convertWebmToMp4, isFfmpegAvailable } from "../output/video.ts";
 import { ensureDir, rmrf } from "../utils/fs.ts";
+import { installCursorOverlay } from "../utils/cursorOverlay.ts";
 
 export type RunScenarioOpts = {
   config: AutoDemoConfig;
@@ -86,6 +87,24 @@ export async function runScenario(opts: RunScenarioOpts): Promise<RunScenarioRes
         recordVideo: opts.config.browser.recordVideo,
         enableTracing: true, // needed to export trace on failure
       });
+
+  // Ensure cursor is visible in videos/screenshots and highlight clicks.
+  const cursorOpts = opts.config.browser.cursor ?? {
+    showCursor: true,
+    style: "arrow",
+    highlightClicks: true,
+    clickRadius: 24,
+  };
+  try {
+    await installCursorOverlay(session.page, {
+      showCursor: cursorOpts.showCursor ?? true,
+      style: (cursorOpts.style as "arrow" | "hand") ?? "arrow",
+      highlightClicks: cursorOpts.highlightClicks ?? true,
+      clickRadius: cursorOpts.clickRadius ?? 24,
+    });
+  } catch {
+    // best-effort; ignore overlay failures
+  }
 
   const steps: RunJsonStep[] = [];
   let status: RunStatus = "success";
