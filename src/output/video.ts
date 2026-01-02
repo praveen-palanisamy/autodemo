@@ -1,4 +1,5 @@
 import { spawn } from "node:child_process";
+import { appendFile } from "node:fs/promises";
 
 export async function isFfmpegAvailable(): Promise<boolean> {
   return new Promise((resolve) => {
@@ -8,7 +9,7 @@ export async function isFfmpegAvailable(): Promise<boolean> {
   });
 }
 
-export async function convertWebmToMp4(opts: { inputWebm: string; outputMp4: string }): Promise<void> {
+export async function convertWebmToMp4(opts: { inputWebm: string; outputMp4: string; logPath?: string }): Promise<void> {
   await new Promise<void>((resolve, reject) => {
     const args = [
       "-y",
@@ -26,11 +27,17 @@ export async function convertWebmToMp4(opts: { inputWebm: string; outputMp4: str
       "23",
       opts.outputMp4,
     ];
-    const p = spawn("ffmpeg", args, { stdio: "inherit" });
+    const p = spawn("ffmpeg", args, { stdio: ["ignore", "pipe", "pipe"] });
+    p.stdout?.on("data", async (chunk) => {
+      if (opts.logPath) await appendFile(opts.logPath, chunk);
+    });
+    p.stderr?.on("data", async (chunk) => {
+      if (opts.logPath) await appendFile(opts.logPath, chunk);
+    });
     p.on("error", reject);
     p.on("exit", (code) => {
       if (code === 0) resolve();
-      else reject(new Error(`ffmpeg exited with code ${code}`));
+      else reject(new Error(`ffmpeg exited with code ${code}${opts.logPath ? ` (see ${opts.logPath})` : ""}`));
     });
   });
 }

@@ -56,7 +56,7 @@ export function RunApp({ parsed, onDone }: Props) {
       <Text>{title}</Text>
 
       {state.kind === "running" ? (
-        <Spinner label="Working" />
+        <Spinner label="Running scenarios..." />
       ) : state.kind === "error" ? (
         <Box flexDirection="column">
           <Text color="red">Error: {state.message}</Text>
@@ -65,9 +65,15 @@ export function RunApp({ parsed, onDone }: Props) {
       ) : (
         <Box flexDirection="column">
           {state.results.map((r) => (
-            <Text key={r.scenario}>
-              {r.status.padEnd(7)} {r.scenario} → {r.outDir}
-            </Text>
+            <Box key={r.scenario} flexDirection="column">
+              <Text>
+                {r.status.padEnd(7)} {r.scenario} → {r.outDir}
+              </Text>
+              <Text dimColor>run.json: {r.artifacts.runJson}</Text>
+              {r.artifacts.videoMp4 ? <Text dimColor>video: {r.artifacts.videoMp4}</Text> : null}
+              {r.artifacts.ffmpegLogPath ? <Text dimColor>ffmpeg log: {r.artifacts.ffmpegLogPath}</Text> : null}
+              {r.failureMessage ? <Text color="red">{r.failureMessage}</Text> : null}
+            </Box>
           ))}
           <Text dimColor>Press Enter or q to exit</Text>
         </Box>

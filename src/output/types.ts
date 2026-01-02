@@ -28,6 +28,7 @@ export type RunJson = {
     runJsonPath: string;
     videoMp4Path?: string;
     traceZipPath?: string;
+    ffmpegLogPath?: string;
   };
 };
 

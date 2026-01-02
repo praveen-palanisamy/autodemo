@@ -7,7 +7,13 @@ import { runScenario } from "../../scenario/runner.ts";
 import type { ScenarioArtifacts } from "../../scenario/runner.ts";
 
 export type RunCoreResult = {
-  results: { scenario: string; status: string; outDir: string; artifacts: ScenarioArtifacts }[];
+  results: {
+    scenario: string;
+    status: string;
+    outDir: string;
+    artifacts: ScenarioArtifacts;
+    failureMessage?: string;
+  }[];
   anyFailure: boolean;
 };
 
@@ -55,7 +61,13 @@ export async function runCore(parsed: ParsedCli): Promise<RunCoreResult> {
       headless: forceHeadless ? true : undefined,
       debug,
     });
-    results.push({ scenario: name, status: result.status, outDir: result.outDir, artifacts: result.artifacts });
+    results.push({
+      scenario: name,
+      status: result.status,
+      outDir: result.outDir,
+      artifacts: result.artifacts,
+      failureMessage: result.failureMessage,
+    });
     if (result.status !== "success") anyFailure = true;
   }
 

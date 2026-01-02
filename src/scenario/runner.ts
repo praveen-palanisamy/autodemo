@@ -15,6 +15,7 @@ import { writeInteractiveHtml, writeRunJson } from "../output/writeArtifacts.ts"
 import { convertWebmToMp4, isFfmpegAvailable } from "../output/video.ts";
 import { ensureDir, rmrf } from "../utils/fs.ts";
 import { installCursorOverlay } from "../utils/cursorOverlay.ts";
+import { appendFile } from "node:fs/promises";
 
 export type RunScenarioOpts = {
   config: AutoDemoConfig;
@@ -30,6 +31,7 @@ export type ScenarioArtifacts = {
   runJson: string;
   videoMp4?: string;
   traceZip?: string;
+  ffmpegLogPath?: string;
 };
 
 export type RunScenarioResult = {
@@ -37,6 +39,7 @@ export type RunScenarioResult = {
   outDir: string;
   artifacts: ScenarioArtifacts;
   run: RunJson;
+  failureMessage?: string;
 };
 
 export async function runScenario(opts: RunScenarioOpts): Promise<RunScenarioResult> {
@@ -111,6 +114,9 @@ export async function runScenario(opts: RunScenarioOpts): Promise<RunScenarioRes
   let traceZipPathRel: string | undefined;
   const transitionMs = opts.config.browser.transitions?.transitionMs ?? 800;
   const endPauseMs = opts.config.browser.transitions?.endPauseMs ?? 1200;
+  const logsDir = path.join(process.cwd(), "logs");
+  await ensureDir(logsDir);
+  const logPath = path.join(logsDir, `${Date.now()}_${opts.scenarioName}.log`);
 
   for (let i = 0; i < scenario.steps.length; i++) {
     const step = scenario.steps[i] as ScenarioStep;
@@ -162,6 +168,8 @@ export async function runScenario(opts: RunScenarioOpts): Promise<RunScenarioRes
       });
     } catch (err) {
       status = "failure";
+      const message = err instanceof Error ? err.message : String(err);
+      await appendFile(logPath, `[${new Date().toISOString()}] ERROR ${message}\n`);
 
       // Best-effort screenshot on failure (if capture isn't explicitly disabled).
       const screenshot = step.capture === false ? undefined : stepScreenshotPath(outDir, i);
@@ -239,7 +247,7 @@ export async function runScenario(opts: RunScenarioOpts): Promise<RunScenarioRes
 
       if (await isFfmpegAvailable()) {
         const mp4Abs = path.join(outDir, "video.mp4");
-        await convertWebmToMp4({ inputWebm: webmAbs, outputMp4: mp4Abs });
+        await convertWebmToMp4({ inputWebm: webmAbs, outputMp4: mp4Abs, logPath });
         videoMp4PathRel = "video.mp4";
       }
     } catch {
@@ -260,6 +268,7 @@ export async function runScenario(opts: RunScenarioOpts): Promise<RunScenarioRes
     artifacts: {
       interactiveHtmlPath: "index.html",
       runJsonPath: "run.json",
+      ffmpegLogPath: path.relative(process.cwd(), logPath),
       ...(videoMp4PathRel ? { videoMp4Path: videoMp4PathRel } : {}),
       ...(traceZipPathRel ? { traceZipPath: traceZipPathRel } : {}),
     },
@@ -275,8 +284,10 @@ export async function runScenario(opts: RunScenarioOpts): Promise<RunScenarioRes
       runJson: runJsonAbs,
       ...(videoMp4PathRel ? { videoMp4: path.join(outDir, videoMp4PathRel) } : {}),
       ...(traceZipPathRel ? { traceZip: path.join(outDir, traceZipPathRel) } : {}),
+      ffmpegLogPath: logPath,
     },
     run: runJson,
+    failureMessage: status === "failure" ? "Scenario failed – see run.json and logs for details." : undefined,
   };
 }
 
