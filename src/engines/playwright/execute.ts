@@ -1,0 +1,78 @@
+import type { Page } from "@playwright/test";
+import type { ScenarioStep } from "../../config/schema.ts";
+import { resolveUrl } from "../../utils/url.ts";
+
+export async function executePlaywrightStep(opts: {
+  page: Page;
+  baseUrl: string;
+  step: ScenarioStep;
+}): Promise<void> {
+  const { page, baseUrl, step } = opts;
+
+  switch (step.type) {
+    case "goto": {
+      await page.goto(resolveUrl(baseUrl, step.url), { waitUntil: "domcontentloaded" });
+      return;
+    }
+    case "click": {
+      await page.click(step.selector);
+      return;
+    }
+    case "fill": {
+      await page.fill(step.selector, step.value);
+      return;
+    }
+    case "hover": {
+      await page.hover(step.selector);
+      return;
+    }
+    case "press": {
+      if (step.selector) {
+        await page.click(step.selector);
+      }
+      await page.keyboard.press(step.key);
+      return;
+    }
+    case "select": {
+      await page.selectOption(step.selector, step.values.map((v) => ({ value: v })));
+      return;
+    }
+    case "waitForSelector": {
+      await page.waitForSelector(step.selector, { timeout: step.timeoutMs });
+      return;
+    }
+    case "waitFor": {
+      const loc =
+        // @ts-expect-error Playwright types differ across versions; keep runtime compatible.
+        typeof page.getByText === "function" ? page.getByText(step.text) : page.locator(`text=${step.text}`);
+      await loc.first().waitFor({ state: "visible", timeout: step.timeoutMs });
+      return;
+    }
+    case "expectVisible": {
+      await page.locator(step.selector).waitFor({ state: "visible", timeout: step.timeoutMs });
+      return;
+    }
+    case "expectText": {
+      const loc = page.locator(step.selector);
+      await loc.first().waitFor({ state: "visible", timeout: 10_000 });
+      const txt = (await loc.first().textContent()) ?? "";
+      if (!txt.includes(step.text)) {
+        throw new Error(`Expected text '${step.text}' in '${step.selector}', got: ${JSON.stringify(txt)}`);
+      }
+      return;
+    }
+    case "sleep": {
+      await new Promise((r) => setTimeout(r, step.ms));
+      return;
+    }
+    // Stagehand-only steps are not executed here.
+    case "act":
+      throw new Error("Internal error: 'act' step routed to Playwright executor");
+    default: {
+      const exhaustive: never = step;
+      throw new Error(`Unsupported step type: ${(exhaustive as any).type}`);
+    }
+  }
+}
+
+

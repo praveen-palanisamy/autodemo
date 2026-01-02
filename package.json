@@ -1,0 +1,46 @@
+{
+  "name": "autodemo",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "autodemo": "./bin/autodemo.ts"
+  },
+  "scripts": {
+    "dev": "bun run ./bin/autodemo.ts",
+    "format": "prettier --write .",
+    "lint": "eslint .",
+    "test": "bun test",
+    "test:unit": "bun test tests/unit",
+    "test:integration": "bun test tests/integration",
+    "playwright:install": "bunx playwright install --with-deps",
+    "doctor": "bun run ./bin/autodemo.ts doctor --no-tui",
+    "mcp": "bun run ./bin/autodemo.ts mcp --no-tui",
+    "e2e": "bun run test:integration"
+  },
+  "workspaces": ["tests/integration/fixtures/next-app"],
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "@browserbasehq/stagehand": "^1.0.0",
+    "@playwright/test": "^1.57.0",
+    "deepmerge": "^4.3.1",
+    "dotenv": "^16.4.5",
+    "ink": "^6.6.0",
+    "openai": "^4.62.1",
+    "react": "^19.0.0",
+    "yaml": "^2.5.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "bun-types": "^1.1.45",
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.0.0",
+    "eslint": "^9.17.0",
+    "eslint-config-prettier": "^9.1.0",
+    "prettier": "^3.4.2",
+    "typescript-eslint": "^8.18.0",
+    "typescript": "^5.7.2"
+  }
+}
+
+
