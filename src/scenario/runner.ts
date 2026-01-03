@@ -115,6 +115,7 @@ export async function runScenario(opts: RunScenarioOpts): Promise<RunScenarioRes
 
   const steps: RunJsonStep[] = [];
   let status: RunStatus = "success";
+  let failureMessage: string | undefined;
   let traceZipPathRel: string | undefined;
   const transitionMs = opts.config.browser.transitions?.transitionMs ?? 800;
   const endPauseMs = opts.config.browser.transitions?.endPauseMs ?? 1200;
@@ -178,6 +179,7 @@ export async function runScenario(opts: RunScenarioOpts): Promise<RunScenarioRes
     } catch (err) {
       status = "failure";
       const message = err instanceof Error ? err.message : String(err);
+      failureMessage = message;
       await appendFile(logPath, `[${new Date().toISOString()}] ERROR ${message}\n`);
 
       // Best-effort screenshot on failure (if capture isn't explicitly disabled).
@@ -301,7 +303,7 @@ export async function runScenario(opts: RunScenarioOpts): Promise<RunScenarioRes
       ffmpegLogPath: logPath,
     },
     run: runJson,
-    failureMessage: status === "failure" ? "Scenario failed – see run.json and logs for details." : undefined,
+    failureMessage,
   };
 }
 

@@ -9,6 +9,7 @@ import { addRecordingBanner } from "../utils/recordingBanner.ts";
 import { mergeScenarioIntoYaml } from "./yamlMerge.ts";
 import { normalizeRecordingUrl } from "./normalizeUrl.ts";
 import { createLogWriter, createLogWriterAt } from "../utils/logWriter.ts";
+import { buildSelectorAndNote, type RecordedElementInfo } from "./selector.ts";
 
 type RecordInput = {
   url: string;
@@ -18,44 +19,48 @@ type RecordInput = {
   logPath?: string;
 };
 
-// Simple selector generator (id > class > tag path)
+// Capture element metadata; we build robust selectors on the Node side.
 const SELECTOR_GENERATOR = `
 (function() {
-  function getSelector(el) {
-    if (el.id) return '#' + el.id;
-    if (el.className && typeof el.className === 'string') {
-      const classes = el.className.split(' ').filter(c => c.trim());
-      if (classes.length > 0) return '.' + classes.join('.');
-    }
-    let path = [];
-    while (el && el.nodeType === Node.ELEMENT_NODE) {
-      let tag = el.tagName.toLowerCase();
+  function getLabelText(el) {
+    try {
+      if (!el) return null;
+      // <label><input/></label>
+      if (el.closest) {
+        const parentLabel = el.closest('label');
+        if (parentLabel) return (parentLabel.innerText || parentLabel.textContent || '').trim();
+      }
+      // <label for="id">
       if (el.id) {
-        path.unshift('#' + el.id);
-        break;
+        const label = document.querySelector('label[for="' + CSS.escape(el.id) + '"]');
+        if (label) return (label.innerText || label.textContent || '').trim();
       }
-      let sibling = el;
-      let nth = 1;
-      while (sibling = sibling.previousElementSibling) {
-        if (sibling.tagName.toLowerCase() === tag) nth++;
-      }
-      if (nth > 1) tag += ':nth-of-type(' + nth + ')';
-      path.unshift(tag);
-      el = el.parentElement;
-    }
-    return path.join(' > ');
+    } catch {}
+    return null;
+  }
+
+  function info(el) {
+    const tag = (el.tagName || 'div').toLowerCase();
+    const testId = el.getAttribute && (el.getAttribute('data-testid') || el.getAttribute('data-test'));
+    const ariaLabel = el.getAttribute && el.getAttribute('aria-label');
+    const nameAttr = el.getAttribute && el.getAttribute('name');
+    const placeholder = el.getAttribute && el.getAttribute('placeholder');
+    const role = el.getAttribute && el.getAttribute('role');
+    const href = tag === 'a' && el.getAttribute ? el.getAttribute('href') : null;
+    const inputType = el.getAttribute && el.getAttribute('type');
+    const text = (el.innerText || el.textContent || '').trim();
+    const labelText = getLabelText(el);
+    return { tag, testId, ariaLabel, nameAttr, placeholder, role, href, inputType, text, labelText };
   }
 
   document.addEventListener('click', (e) => {
-    const sel = getSelector(e.target);
-    window.__logAction({ type: 'click', selector: sel });
+    window.__logAction({ type: 'click', el: info(e.target) });
   }, true);
 
   document.addEventListener('change', (e) => {
-    const sel = getSelector(e.target);
     // For now, assume fill if it's an input
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
-       window.__logAction({ type: 'fill', selector: sel, value: e.target.value });
+       window.__logAction({ type: 'fill', el: info(e.target), value: e.target.value });
     }
   }, true);
 })();
@@ -73,6 +78,17 @@ export async function recordScenario(
   const browser = await chromium.launch({ headless: false });
   const context = await browser.newContext();
   const page = await context.newPage();
+  let lastUrl = "about:blank";
+  page.on("framenavigated", (frame) => {
+    if (frame === page.mainFrame()) {
+      lastUrl = frame.url();
+      void log.write(`[${new Date().toISOString()}] navigated ${lastUrl}\n`);
+    }
+  });
+  page.on("close", () => void log.write(`[${new Date().toISOString()}] page close url=${lastUrl}\n`));
+  page.on("crash", () => void log.write(`[${new Date().toISOString()}] page crash url=${lastUrl}\n`));
+  context.on("close", () => void log.write(`[${new Date().toISOString()}] context close\n`));
+  browser.on("disconnected", () => void log.write(`[${new Date().toISOString()}] browser disconnected\n`));
 
   const steps: ScenarioStep[] = [];
   // Start at the exact path the user provided (portable by storing origin separately in project.baseUrl).
@@ -100,11 +116,24 @@ export async function recordScenario(
   // Expose binding to capture events from browser
   await page.exposeFunction(
     "__logAction",
-    (action: { type: string; selector?: string; value?: string | number | null }) => {
-      if (action.type === "click" && action.selector) {
-        steps.push({ type: "click", selector: action.selector });
-      } else if (action.type === "fill" && action.selector) {
-        steps.push({ type: "fill", selector: action.selector, value: String(action.value ?? "") });
+    (action: unknown) => {
+      try {
+        const a = action as { type?: string; el?: unknown; value?: unknown };
+        if (a?.type === "click" && a.el && typeof a.el === "object") {
+          const { selector, note } = buildSelectorAndNote({ type: "click", el: a.el as RecordedElementInfo });
+          steps.push({ type: "click", selector, ...(note ? { note } : {}) });
+          void log.write(`[${new Date().toISOString()}] click selector=${selector} note=${note ?? ""}\n`);
+        } else if (a?.type === "fill" && a.el && typeof a.el === "object") {
+          const { selector, note } = buildSelectorAndNote({
+            type: "fill",
+            el: a.el as RecordedElementInfo,
+            value: String(a.value ?? ""),
+          });
+          steps.push({ type: "fill", selector, value: String(a.value ?? ""), ...(note ? { note } : {}) });
+          void log.write(`[${new Date().toISOString()}] fill selector=${selector} note=${note ?? ""}\n`);
+        }
+      } catch (e) {
+        void log.write(`[${new Date().toISOString()}] ERROR building selector: ${e instanceof Error ? e.message : String(e)}\n`);
       }
     },
   );

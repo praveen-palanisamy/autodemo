@@ -137,7 +137,12 @@ export function RunWizardApp({ cwd, defaultConfigPath, onDone, initial }: Props)
           video: res.artifacts.videoMp4,
           log: res.artifacts.ffmpegLogPath,
         });
-        setStep(res.status === "success" ? "done" : "error");
+        if (res.status === "success") {
+          setStep("done");
+        } else {
+          setMessage(res.failureMessage ?? "Scenario failed");
+          setStep("error");
+        }
       } catch (err) {
         setMessage(err instanceof Error ? err.message : String(err));
         setStep("error");
@@ -194,10 +199,22 @@ export function RunWizardApp({ cwd, defaultConfigPath, onDone, initial }: Props)
           <Text color="green">Success</Text>
           {result ? (
             <Box flexDirection="column">
-              <Text dimColor>out: {result.outDir}</Text>
-              <Text dimColor>run.json: {result.runJson}</Text>
-              {result.video ? <Text dimColor>video: {result.video}</Text> : null}
-              {result.log ? <Text dimColor>log: {result.log}</Text> : null}
+              <Text dimColor>out:</Text>
+              <Text>{result.outDir}</Text>
+              <Text dimColor>run.json:</Text>
+              <Text>{result.runJson}</Text>
+              {result.video ? (
+                <>
+                  <Text dimColor>video:</Text>
+                  <Text>{result.video}</Text>
+                </>
+              ) : null}
+              {result.log ? (
+                <>
+                  <Text dimColor>log:</Text>
+                  <Text>{result.log}</Text>
+                </>
+              ) : null}
             </Box>
           ) : null}
           <Text dimColor>Press Enter or q to exit</Text>
@@ -207,10 +224,22 @@ export function RunWizardApp({ cwd, defaultConfigPath, onDone, initial }: Props)
           <Text color="red">Error: {message}</Text>
           {result ? (
             <Box flexDirection="column">
-              <Text dimColor>out: {result.outDir}</Text>
-              <Text dimColor>run.json: {result.runJson}</Text>
-              {result.video ? <Text dimColor>video: {result.video}</Text> : null}
-              {result.log ? <Text dimColor>log: {result.log}</Text> : null}
+              <Text dimColor>out:</Text>
+              <Text>{result.outDir}</Text>
+              <Text dimColor>run.json:</Text>
+              <Text>{result.runJson}</Text>
+              {result.video ? (
+                <>
+                  <Text dimColor>video:</Text>
+                  <Text>{result.video}</Text>
+                </>
+              ) : null}
+              {result.log ? (
+                <>
+                  <Text dimColor>log:</Text>
+                  <Text>{result.log}</Text>
+                </>
+              ) : null}
             </Box>
           ) : null}
           <Text dimColor>Press Enter or q to exit</Text>
