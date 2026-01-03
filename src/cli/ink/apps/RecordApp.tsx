@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Box, Text, useInput } from "ink";
 import { existsSync } from "node:fs";
 import path from "node:path";
@@ -23,6 +23,7 @@ export function RecordApp({ cwd, defaultConfigPath, onDone, initialValues }: Pro
   const [message, setMessage] = useState<string | null>(null);
   const [reuseConfirmed, setReuseConfirmed] = useState(false);
   const [configExists, setConfigExists] = useState(false);
+  const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     if (step === "name") setBuffer(name);
@@ -30,6 +31,16 @@ export function RecordApp({ cwd, defaultConfigPath, onDone, initialValues }: Pro
   }, [step, name, configPath]);
 
   useInput((input, key) => {
+    // Allow Ctrl+C to stop recording and still save partial steps.
+    if (key.ctrl && input === "c") {
+      if (step === "record") {
+        abortRef.current?.abort();
+        return;
+      }
+      onDone(130);
+      return;
+    }
+
     if (step === "done" || step === "error") {
       if (key.return || input === "q" || input === "Q") onDone(step === "done" ? 0 : 1);
       return;
@@ -85,11 +96,6 @@ export function RecordApp({ cwd, defaultConfigPath, onDone, initialValues }: Pro
       return;
     }
 
-    if (key.ctrl && input === "c") {
-      onDone(130);
-      return;
-    }
-
     setBuffer((b) => b + input);
   });
 
@@ -99,10 +105,18 @@ export function RecordApp({ cwd, defaultConfigPath, onDone, initialValues }: Pro
       try {
         if (!url) throw new Error("URL is required");
         const log = await createLogWriter({ kind: "record", name });
+        abortRef.current = new AbortController();
         setMessage(
-          `Launching browser…\n${configExists ? `Reusing config: ${configPath}\n` : ""}log: ${log.path}\nClose the browser window to finish recording.`,
+          `Launching browser…\n${configExists ? `Reusing config: ${configPath}\n` : ""}log: ${log.path}\nClose the browser window to finish recording.\n(Or click Stop & Save in the page, or Ctrl+C here.)`,
         );
-        const res = await recordScenario({ cwd, url, name, configPath, logPath: log.path });
+        const res = await recordScenario({
+          cwd,
+          url,
+          name,
+          configPath,
+          logPath: log.path,
+          signal: abortRef.current.signal,
+        });
         setMessage(`Saved scenario '${res.scenarioName}' to ${configPath}\nlog: ${res.logPath}`);
         setStep("done");
       } catch (err) {

@@ -1,5 +1,6 @@
 export type RecordedElementInfo = {
   tag: string;
+  idAttr?: string;
   testId?: string;
   ariaLabel?: string;
   nameAttr?: string;
@@ -20,7 +21,11 @@ function escAttrValue(v: string): string {
 }
 
 function escHasText(v: string): string {
-  return v.replace(/\\/g, "\\\\").replace(/"/g, '\\"').trim();
+  return v
+    .replace(/\s+/g, " ")
+    .replace(/\\/g, "\\\\")
+    .replace(/"/g, '\\"')
+    .trim();
 }
 
 function cleanText(v: string | undefined): string | undefined {
@@ -46,28 +51,33 @@ export function buildSelectorAndNote(action: RecordedAction): { selector: string
     return { selector, note };
   }
 
-  // 2) label + input
-  if (action.type === "fill" && el.labelText) {
-    const label = escHasText(el.labelText);
-    const selector = `label:has-text("${label}") >> input`;
-    return { selector, note: `Fill ${el.labelText}` };
-  }
-
-  // 3) aria-label
-  if (el.ariaLabel) {
-    const selector = `${tag}[aria-label="${escAttrValue(el.ariaLabel)}"]`;
-    const note = action.type === "click" ? `Click ${el.ariaLabel}` : `Fill ${el.ariaLabel}`;
-    return { selector, note };
-  }
-
-  // 4) name / placeholder for inputs
+  // 2) For fills: prefer direct attributes that are stable and always valid CSS.
   if (action.type === "fill") {
+    if (el.idAttr) {
+      return { selector: `[id="${escAttrValue(el.idAttr)}"]`, note: el.labelText ? `Fill ${el.labelText}` : `Fill ${tag}` };
+    }
+    if (el.ariaLabel) {
+      return { selector: `${tag}[aria-label="${escAttrValue(el.ariaLabel)}"]`, note: `Fill ${el.ariaLabel}` };
+    }
     if (el.nameAttr) {
       return { selector: `${tag}[name="${escAttrValue(el.nameAttr)}"]`, note: `Fill ${el.nameAttr}` };
     }
     if (el.placeholder) {
       return { selector: `${tag}[placeholder="${escAttrValue(el.placeholder)}"]`, note: `Fill ${el.placeholder}` };
     }
+    // Label text fallback: use :below() so it works even if <label> doesn't wrap <input>.
+    if (el.labelText) {
+      const label = escHasText(el.labelText);
+      const selector = `input:below(label:has-text("${label}"))`;
+      return { selector, note: `Fill ${el.labelText.replace(/\s+/g, " ").trim()}` };
+    }
+  }
+
+  // 3) aria-label for non-fill actions
+  if (el.ariaLabel) {
+    const selector = `${tag}[aria-label="${escAttrValue(el.ariaLabel)}"]`;
+    const note = action.type === "click" ? `Click ${el.ariaLabel}` : `Fill ${el.ariaLabel}`;
+    return { selector, note };
   }
 
   // 5) href for links

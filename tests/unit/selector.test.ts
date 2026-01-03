@@ -16,7 +16,7 @@ test("uses label >> input for fills when labelText exists", () => {
     el: { tag: "input", labelText: "Email" },
     value: "x",
   });
-  expect(selector).toContain('label:has-text("Email")');
+  expect(selector).toContain('input:below(label:has-text("Email"))');
   expect(note).toBe("Fill Email");
 });
 

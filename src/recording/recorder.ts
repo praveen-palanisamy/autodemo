@@ -10,6 +10,7 @@ import { mergeScenarioIntoYaml } from "./yamlMerge.ts";
 import { normalizeRecordingUrl } from "./normalizeUrl.ts";
 import { createLogWriter, createLogWriterAt } from "../utils/logWriter.ts";
 import { buildSelectorAndNote, type RecordedElementInfo } from "./selector.ts";
+import { installRecordStopOverlay } from "../utils/recordStopOverlay.ts";
 
 type RecordInput = {
   url: string;
@@ -17,6 +18,7 @@ type RecordInput = {
   configPath: string;
   cwd: string;
   logPath?: string;
+  signal?: AbortSignal;
 };
 
 // Capture element metadata; we build robust selectors on the Node side.
@@ -41,6 +43,7 @@ const SELECTOR_GENERATOR = `
 
   function info(el) {
     const tag = (el.tagName || 'div').toLowerCase();
+    const idAttr = el.getAttribute && el.getAttribute('id');
     const testId = el.getAttribute && (el.getAttribute('data-testid') || el.getAttribute('data-test'));
     const ariaLabel = el.getAttribute && el.getAttribute('aria-label');
     const nameAttr = el.getAttribute && el.getAttribute('name');
@@ -50,7 +53,7 @@ const SELECTOR_GENERATOR = `
     const inputType = el.getAttribute && el.getAttribute('type');
     const text = (el.innerText || el.textContent || '').trim();
     const labelText = getLabelText(el);
-    return { tag, testId, ariaLabel, nameAttr, placeholder, role, href, inputType, text, labelText };
+    return { tag, idAttr, testId, ariaLabel, nameAttr, placeholder, role, href, inputType, text, labelText };
   }
 
   document.addEventListener('click', (e) => {
@@ -113,8 +116,19 @@ export async function recordScenario(
     // best-effort
   }
 
-  // Expose binding to capture events from browser
-  await page.exposeFunction(
+  let stopReason: string | undefined;
+  let resolveStop: (() => void) | undefined;
+  const stopPromise = new Promise<void>((resolve) => {
+    resolveStop = resolve;
+  });
+  const stop = (reason: string) => {
+    if (stopReason) return;
+    stopReason = reason;
+    resolveStop?.();
+  };
+
+  // Expose binding to capture events from browser (context-scoped so it survives page changes).
+  await context.exposeFunction(
     "__logAction",
     (action: unknown) => {
       try {
@@ -138,7 +152,23 @@ export async function recordScenario(
     },
   );
 
-  await page.addInitScript(SELECTOR_GENERATOR);
+  await context.addInitScript(SELECTOR_GENERATOR);
+
+  // Stop overlay (works across navigations/pages).
+  await installRecordStopOverlay({
+    context,
+    page,
+    onStop: () => stop("stop_button"),
+  });
+
+  const onSigint = () => stop("sigint");
+  process.on("SIGINT", onSigint);
+  browser.on("disconnected", () => stop("browser_closed"));
+  context.on("close", () => stop("context_closed"));
+  if (input.signal) {
+    if (input.signal.aborted) stop("sigint");
+    else input.signal.addEventListener("abort", () => stop("sigint"), { once: true });
+  }
 
   console.log(`Recording scenario '${input.name}'...`);
   console.log(`Navigate to ${normalized.full} and interact.`);
@@ -151,23 +181,17 @@ export async function recordScenario(
     await page.goto(normalized.full);
     gotoOk = true;
     await log.write(`[${new Date().toISOString()}] goto ok\n`);
-    // Wait until browser is closed (page, context, or browser disconnect).
-    await Promise.race([
-      page.waitForEvent("close").catch(() => {}),
-      context.waitForEvent("close").catch(() => {}),
-      new Promise<void>((resolve) => browser.once("disconnected", () => resolve())),
-    ]);
+    // Wait until user stops recording: browser close, stop button, or Ctrl+C.
+    await stopPromise;
   } catch (err) {
     console.error(`Failed to navigate to ${input.url}: ${err instanceof Error ? err.message : String(err)}`);
     console.error("Keeping the browser open — you can manually navigate. Close the browser window to save.");
     await log.write(`[${new Date().toISOString()}] goto failed: ${err instanceof Error ? err.message : String(err)}\n`);
-    await Promise.race([
-      page.waitForEvent("close").catch(() => {}),
-      context.waitForEvent("close").catch(() => {}),
-      new Promise<void>((resolve) => browser.once("disconnected", () => resolve())),
-    ]);
+    // Keep running until stop condition.
+    await stopPromise;
   } finally {
     try {
+      process.off("SIGINT", onSigint);
       await browser.close();
     } catch {
       // ignore
@@ -195,7 +219,9 @@ export async function recordScenario(
   console.log(
     `Saved scenario '${merged.scenarioName}' to ${input.configPath}${merged.reusedConfig ? " (reused existing config)" : ""}`,
   );
-  await log.write(`[${new Date().toISOString()}] saved scenario=${merged.scenarioName} steps=${steps.length}\n`);
+  await log.write(
+    `[${new Date().toISOString()}] stopReason=${stopReason ?? "unknown"} saved scenario=${merged.scenarioName} steps=${steps.length}\n`,
+  );
   return { scenarioName: merged.scenarioName, logPath: log.path, stepsCount: steps.length };
 }
 
