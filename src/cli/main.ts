@@ -36,7 +36,9 @@ export async function main(argv: string[]): Promise<void> {
       default:
         throw new Error(`Unknown command: ${parsed.command}`);
     }
-    process.exit(code);
+    // Avoid process.exit() so SIGINT handlers and async cleanup can complete.
+    process.exitCode = code;
+    return;
   } catch (err) {
     const isUsage = err instanceof CliUsageError || err instanceof CliConfigError;
     const message = formatCliError(err);
@@ -46,7 +48,8 @@ export async function main(argv: string[]): Promise<void> {
     } else {
       console.error(message);
     }
-    process.exit(isUsage ? 2 : 1);
+    process.exitCode = isUsage ? 2 : 1;
+    return;
   }
 }
 

@@ -81,6 +81,18 @@ export async function recordScenario(
   const browser = await chromium.launch({ headless: false });
   const context = await browser.newContext();
   const page = await context.newPage();
+  // If the app opens a new page during auth/redirect, keep recording (don't stop).
+  context.on("page", (p) => {
+    void log.write(`[${new Date().toISOString()}] new page url=${p.url()}\n`);
+    p.on("close", () => {
+      void log.write(`[${new Date().toISOString()}] page close url=${p.url()}\n`);
+      try {
+        if (context.pages().length === 0) stop("all_pages_closed");
+      } catch {
+        // ignore
+      }
+    });
+  });
   let lastUrl = "about:blank";
   page.on("framenavigated", (frame) => {
     if (frame === page.mainFrame()) {
@@ -88,7 +100,14 @@ export async function recordScenario(
       void log.write(`[${new Date().toISOString()}] navigated ${lastUrl}\n`);
     }
   });
-  page.on("close", () => void log.write(`[${new Date().toISOString()}] page close url=${lastUrl}\n`));
+  page.on("close", () => {
+    void log.write(`[${new Date().toISOString()}] page close url=${lastUrl}\n`);
+    try {
+      if (context.pages().length === 0) stop("all_pages_closed");
+    } catch {
+      // ignore
+    }
+  });
   page.on("crash", () => void log.write(`[${new Date().toISOString()}] page crash url=${lastUrl}\n`));
   context.on("close", () => void log.write(`[${new Date().toISOString()}] context close\n`));
   browser.on("disconnected", () => void log.write(`[${new Date().toISOString()}] browser disconnected\n`));

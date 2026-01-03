@@ -4,6 +4,7 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 import { recordScenario } from "../../../recording/recorder.ts";
 import { createLogWriter } from "../../../utils/logWriter.ts";
+import { setSigintAbortController } from "../../../utils/sigintManager.ts";
 
 type Props = {
   cwd: string;
@@ -106,6 +107,7 @@ export function RecordApp({ cwd, defaultConfigPath, onDone, initialValues }: Pro
         if (!url) throw new Error("URL is required");
         const log = await createLogWriter({ kind: "record", name });
         abortRef.current = new AbortController();
+        setSigintAbortController(abortRef.current);
         setMessage(
           `Launching browser…\n${configExists ? `Reusing config: ${configPath}\n` : ""}log: ${log.path}\nClose the browser window to finish recording.\n(Or click Stop & Save in the page, or Ctrl+C here.)`,
         );
@@ -117,9 +119,11 @@ export function RecordApp({ cwd, defaultConfigPath, onDone, initialValues }: Pro
           logPath: log.path,
           signal: abortRef.current.signal,
         });
+        setSigintAbortController(null);
         setMessage(`Saved scenario '${res.scenarioName}' to ${configPath}\nlog: ${res.logPath}`);
         setStep("done");
       } catch (err) {
+        setSigintAbortController(null);
         setMessage(err instanceof Error ? err.message : String(err));
         setStep("error");
       }
