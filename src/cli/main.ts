@@ -10,7 +10,13 @@ import { CliConfigError, CliUsageError } from "./errors.ts";
 export async function main(argv: string[]): Promise<void> {
   const parsed = parseCli(argv);
 
-  if (parsed.command === "help" || parsed.command === undefined) {
+  // Global help
+  if (
+    parsed.command === "help" ||
+    parsed.command === undefined ||
+    parsed.args.includes("--help") ||
+    parsed.args.includes("-h")
+  ) {
     printHelp(parsed);
     return;
   }

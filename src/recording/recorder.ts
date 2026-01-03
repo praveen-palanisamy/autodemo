@@ -162,6 +162,17 @@ export async function recordScenario(
             el: a.el as RecordedElementInfo,
             value: String(a.value ?? ""),
           });
+          // Ensure there's an explicit click before fill for better UX and human-like playback.
+          const last = steps[steps.length - 1] as ScenarioStep | undefined;
+          const lastSelector =
+            last && (last.type === "click" || last.type === "fill" || last.type === "hover" || last.type === "select")
+              ? (last as { selector: string }).selector
+              : undefined;
+          const needsClick = !last || last.type !== "click" || lastSelector !== selector;
+          if (needsClick) {
+            const clickMeta = buildSelectorAndNote({ type: "click", el: a.el as RecordedElementInfo });
+            steps.push({ type: "click", selector, ...(clickMeta.note ? { note: clickMeta.note } : {}) });
+          }
           steps.push({ type: "fill", selector, value: String(a.value ?? ""), ...(note ? { note } : {}) });
           void log.write(`[${new Date().toISOString()}] fill selector=${selector} note=${note ?? ""}\n`);
         }
@@ -200,6 +211,13 @@ export async function recordScenario(
     await page.goto(normalized.full);
     gotoOk = true;
     await log.write(`[${new Date().toISOString()}] goto ok\n`);
+    // Debug overlay visibility
+    try {
+      const has = await page.evaluate(() => !!document.getElementById("__autodemo-rec-controls"));
+      await log.write(`[${new Date().toISOString()}] overlay.present=${has}\n`);
+    } catch {
+      // ignore
+    }
     // Wait until user stops recording: browser close, stop button, or Ctrl+C.
     await stopPromise;
   } catch (err) {

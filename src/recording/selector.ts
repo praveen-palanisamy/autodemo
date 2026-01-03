@@ -51,11 +51,22 @@ export function buildSelectorAndNote(action: RecordedAction): { selector: string
     return { selector, note };
   }
 
+  // 1.5) Stable id for both click/fill
+  if (el.idAttr) {
+    const selector = `[id="${escAttrValue(el.idAttr)}"]`;
+    const note =
+      action.type === "click"
+        ? el.labelText
+          ? `Click ${el.labelText.replace(/\s+/g, " ").trim()}`
+          : `Click ${tag}`
+        : el.labelText
+          ? `Fill ${el.labelText.replace(/\s+/g, " ").trim()}`
+          : `Fill ${tag}`;
+    return { selector, note };
+  }
+
   // 2) For fills: prefer direct attributes that are stable and always valid CSS.
   if (action.type === "fill") {
-    if (el.idAttr) {
-      return { selector: `[id="${escAttrValue(el.idAttr)}"]`, note: el.labelText ? `Fill ${el.labelText}` : `Fill ${tag}` };
-    }
     if (el.ariaLabel) {
       return { selector: `${tag}[aria-label="${escAttrValue(el.ariaLabel)}"]`, note: `Fill ${el.ariaLabel}` };
     }
@@ -78,6 +89,17 @@ export function buildSelectorAndNote(action: RecordedAction): { selector: string
     const selector = `${tag}[aria-label="${escAttrValue(el.ariaLabel)}"]`;
     const note = action.type === "click" ? `Click ${el.ariaLabel}` : `Fill ${el.ariaLabel}`;
     return { selector, note };
+  }
+
+  // 4) For click on inputs: use name/placeholder/label
+  if (action.type === "click" && tag === "input") {
+    if (el.nameAttr) return { selector: `input[name="${escAttrValue(el.nameAttr)}"]`, note: `Click ${el.nameAttr}` };
+    if (el.placeholder)
+      return { selector: `input[placeholder="${escAttrValue(el.placeholder)}"]`, note: `Click ${el.placeholder}` };
+    if (el.labelText) {
+      const label = escHasText(el.labelText);
+      return { selector: `input:below(label:has-text("${label}"))`, note: `Click ${el.labelText.replace(/\s+/g, " ").trim()}` };
+    }
   }
 
   // 5) href for links

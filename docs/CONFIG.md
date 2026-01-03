@@ -20,6 +20,8 @@ browser:
   cursor:
     showCursor: true
     style: arrow # arrow | hand
+    pointerColor: "#0076FF"
+    clickColor: "#0076FF"
     highlightClicks: true
     clickRadius: 24
 
@@ -76,6 +78,8 @@ Notes:
 `browser.cursor` controls the custom pointer overlay that is visible in screenshots and videos (headless or headed):
 - `showCursor`: show a synthetic pointer so the cursor is visible in recordings.
 - `style`: `arrow | hand`.
+- `pointerColor`: pointer hex color (`#RRGGBB`).
+- `clickColor`: click ring hex color (`#RRGGBB`).
 - `highlightClicks`: draw a ring on click.
 - `clickRadius`: ring radius in px.
 

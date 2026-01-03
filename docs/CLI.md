@@ -5,6 +5,7 @@ All commands support:
 - `--tui`: force Ink UI (useful if your environment doesn't report TTY correctly)
 - `--no-tui`: disable Ink UI (auto-enabled in CI / non-TTY)
 - `--json`: machine-readable JSON output (implies `--no-tui`)
+- `--help` / `-h`: show help
 
 ### Commands
 
@@ -28,6 +29,11 @@ bun run dev -- record --url http://localhost:3000 --instruction "Sign up and ope
 bun run dev -- record --interactive --url http://localhost:3000 --name signup
 ```
 You can also omit flags and use the Ink wizard: `bun run dev -- record`
+
+Stopping recording:
+- Close the browser window
+- Click **Stop & Save** in the page
+- Ctrl+C in the terminal (saves partial steps)
 
 #### `autodemo run`
 

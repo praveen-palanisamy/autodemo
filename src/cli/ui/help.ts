@@ -1,12 +1,32 @@
 import type { ParsedCli } from "../parse.ts";
 
 export function printHelp(parsed: ParsedCli): void {
+  const command = parsed.command;
+  const cmdLines =
+    command === "run"
+      ? [
+          "Run:",
+          "  autodemo run <scenario> [--url <url>] [--headless] [--config <path>]",
+          "  autodemo run --all [--url <url>] [--headless] [--config <path>]",
+          "  autodemo run --interactive   # run wizard (pick config/scenario/url)",
+          "",
+        ]
+      : command === "record"
+        ? [
+            "Record:",
+            "  autodemo record --url <url> --instruction \"...\" --name <scenario>",
+            "  autodemo record --interactive   # capture real interactions",
+            "",
+          ]
+        : [];
+
   const lines = [
     "autodemo — Stagehand-first demo automation (v0.1)",
     "",
     "Usage:",
     "  autodemo <command> [options]",
     "",
+    ...cmdLines,
     "Commands:",
     "  init                 Create .autodemo.yml (idempotent) and output dir",
     "  record               Generate/update a scenario from an instruction",
