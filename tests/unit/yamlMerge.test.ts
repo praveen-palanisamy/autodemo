@@ -23,8 +23,8 @@ scenarios:
 
   expect(res.yamlText).toContain("existing:");
   expect(res.yamlText).toContain("new:");
-  // baseUrl should not be overwritten if already set
-  expect(res.yamlText).toContain("baseUrl: http://localhost:3000");
+  // default placeholder baseUrl is upgraded to the provided baseUrl
+  expect(res.yamlText).toContain("baseUrl: http://localhost:9999");
 });
 
 test("mergeScenarioIntoYaml avoids overwriting existing scenario name by suffixing", () => {

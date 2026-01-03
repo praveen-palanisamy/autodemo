@@ -4,6 +4,7 @@ import { readFile, writeFile } from "node:fs/promises";
 import YAML from "yaml";
 
 import { defaultAutodemoYamlTemplate } from "../../config/templates/autodemoYaml.ts";
+import { normalizeRecordingUrl } from "../../recording/normalizeUrl.ts";
 
 export type RecordCoreInput = {
   cwd: string;
@@ -24,10 +25,11 @@ export async function recordCore(input: RecordCoreInput): Promise<{ scenario: st
 
   const doc = YAML.parseDocument(yamlText);
 
-  // Fill baseUrl if missing (keep user's value if already set).
+  const normalized = normalizeRecordingUrl(input.url);
+  // Prefer setting baseUrl to the provided origin (portable); only overwrite placeholder default.
   const baseUrl = doc.getIn(["project", "baseUrl"]);
-  if (!baseUrl) {
-    doc.setIn(["project", "baseUrl"], input.url);
+  if (!baseUrl || String(baseUrl) === "http://localhost:3000") {
+    doc.setIn(["project", "baseUrl"], normalized.origin);
   }
 
   if (!doc.get("scenarios")) {
@@ -37,7 +39,7 @@ export async function recordCore(input: RecordCoreInput): Promise<{ scenario: st
   doc.setIn(["scenarios", input.name], {
     description: `Recorded: ${input.instruction}`,
     steps: [
-      { type: "goto", url: "/" },
+      { type: "goto", url: normalized.pathAndQuery },
       { type: "act", instruction: input.instruction },
     ],
   });

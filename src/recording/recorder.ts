@@ -7,12 +7,15 @@ import { ScenarioStep } from "../config/schema.ts";
 import { installCursorOverlay } from "../utils/cursorOverlay.ts";
 import { addRecordingBanner } from "../utils/recordingBanner.ts";
 import { mergeScenarioIntoYaml } from "./yamlMerge.ts";
+import { normalizeRecordingUrl } from "./normalizeUrl.ts";
+import { createLogWriter, createLogWriterAt } from "../utils/logWriter.ts";
 
 type RecordInput = {
   url: string;
   name: string;
   configPath: string;
   cwd: string;
+  logPath?: string;
 };
 
 // Simple selector generator (id > class > tag path)
@@ -58,13 +61,22 @@ const SELECTOR_GENERATOR = `
 })();
 `;
 
-export async function recordScenario(input: RecordInput): Promise<void> {
+export async function recordScenario(
+  input: RecordInput,
+): Promise<{ scenarioName: string; logPath: string; stepsCount: number }> {
+  const normalized = normalizeRecordingUrl(input.url);
+  const log = input.logPath ? await createLogWriterAt(input.logPath) : await createLogWriter({ kind: "record", name: input.name });
+
+  await log.write(`Starting interactive record\n`);
+  await log.write(`url.input=${input.url}\nurl.full=${normalized.full}\nurl.origin=${normalized.origin}\nurl.path=${normalized.pathAndQuery}\n`);
+
   const browser = await chromium.launch({ headless: false });
   const context = await browser.newContext();
   const page = await context.newPage();
 
   const steps: ScenarioStep[] = [];
-  steps.push({ type: "goto", url: "/" }); // Start with root relative to baseUrl
+  // Start at the exact path the user provided (portable by storing origin separately in project.baseUrl).
+  steps.push({ type: "goto", url: normalized.pathAndQuery });
 
   try {
     await installCursorOverlay(page, {
@@ -100,13 +112,16 @@ export async function recordScenario(input: RecordInput): Promise<void> {
   await page.addInitScript(SELECTOR_GENERATOR);
 
   console.log(`Recording scenario '${input.name}'...`);
-  console.log(`Navigate to ${input.url} and interact.`);
+  console.log(`Navigate to ${normalized.full} and interact.`);
   console.log("Close the browser window to save and exit. (Recording stays open until you close it.)");
+  console.log(`log: ${log.path}`);
 
   let gotoOk = false;
   try {
-    await page.goto(input.url);
+    await log.write(`[${new Date().toISOString()}] goto ${normalized.full}\n`);
+    await page.goto(normalized.full);
     gotoOk = true;
+    await log.write(`[${new Date().toISOString()}] goto ok\n`);
     // Wait until browser is closed (page, context, or browser disconnect).
     await Promise.race([
       page.waitForEvent("close").catch(() => {}),
@@ -116,6 +131,7 @@ export async function recordScenario(input: RecordInput): Promise<void> {
   } catch (err) {
     console.error(`Failed to navigate to ${input.url}: ${err instanceof Error ? err.message : String(err)}`);
     console.error("Keeping the browser open — you can manually navigate. Close the browser window to save.");
+    await log.write(`[${new Date().toISOString()}] goto failed: ${err instanceof Error ? err.message : String(err)}\n`);
     await Promise.race([
       page.waitForEvent("close").catch(() => {}),
       context.waitForEvent("close").catch(() => {}),
@@ -143,12 +159,14 @@ export async function recordScenario(input: RecordInput): Promise<void> {
     scenarioName: input.name,
     description: `Recorded interactively${gotoOk ? "" : " (manual navigation)"}`,
     steps,
-    baseUrl: input.url,
+    baseUrl: normalized.origin,
   });
 
   await writeFile(configPathAbs, merged.yamlText, "utf8");
   console.log(
     `Saved scenario '${merged.scenarioName}' to ${input.configPath}${merged.reusedConfig ? " (reused existing config)" : ""}`,
   );
+  await log.write(`[${new Date().toISOString()}] saved scenario=${merged.scenarioName} steps=${steps.length}\n`);
+  return { scenarioName: merged.scenarioName, logPath: log.path, stepsCount: steps.length };
 }
 

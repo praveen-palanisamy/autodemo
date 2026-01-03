@@ -38,11 +38,25 @@ bun run dev -- run signup --no-tui
 bun run dev -- run --all --no-tui
 ```
 
+Interactive wizard (choose config + scenario + URL + headless):
+
+```bash
+bun run dev -- run --interactive
+```
+
 Options:
 - `--url <url>`: override base URL
 - `--outDir <dir>`: override output directory base
 - `--headless`: force headless browser (default: headed)
+- `--interactive`: open run wizard UI
 - `--debug`: save `trace.zip` even on success
+
+Config selection:
+- Use the global `--config <path>` flag:
+
+```bash
+bun run dev -- run signup --config verber-studio.autodemo.yml --url http://localhost:3010
+```
 
 #### `autodemo doctor`
 

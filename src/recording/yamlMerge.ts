@@ -12,8 +12,12 @@ export function mergeScenarioIntoYaml(opts: {
   const doc = YAML.parseDocument(opts.yamlText);
 
   if (!doc.get("project")) doc.set("project", {});
-  if (opts.baseUrl && !doc.getIn(["project", "baseUrl"])) {
-    doc.setIn(["project", "baseUrl"], opts.baseUrl);
+  if (opts.baseUrl) {
+    const existing = doc.getIn(["project", "baseUrl"]);
+    // Set if missing, or if it looks like the default placeholder.
+    if (!existing || String(existing) === "http://localhost:3000") {
+      doc.setIn(["project", "baseUrl"], opts.baseUrl);
+    }
   }
 
   if (!doc.get("scenarios")) {

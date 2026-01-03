@@ -44,12 +44,15 @@ export async function runRecord(parsed: ParsedCli): Promise<number> {
 
   if (interactive) {
     const resolvedUrl = requireOption(url, "--url");
-    await recordScenario({
+    const res = await recordScenario({
       cwd: parsed.global.cwd,
       url: resolvedUrl,
       name,
       configPath: out,
     });
+    if (!parsed.global.json) {
+      console.log(`log: ${res.logPath}`);
+    }
     return 0;
   }
 

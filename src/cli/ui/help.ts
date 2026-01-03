@@ -24,6 +24,7 @@ export function printHelp(parsed: ParsedCli): void {
     "  --url <url>        Override baseUrl",
     "  --outDir <dir>     Override output dir (default: config output.dir)",
     "  --headless         Run browser headless (default: headed)",
+    "  --interactive      Launch run wizard (pick config + scenario + url)",
     "  --debug            Save trace.zip even on success",
     "",
   ];

@@ -3,6 +3,7 @@ import { Box, Text, useInput } from "ink";
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { recordScenario } from "../../../recording/recorder.ts";
+import { createLogWriter } from "../../../utils/logWriter.ts";
 
 type Props = {
   cwd: string;
@@ -97,11 +98,12 @@ export function RecordApp({ cwd, defaultConfigPath, onDone, initialValues }: Pro
     (async () => {
       try {
         if (!url) throw new Error("URL is required");
+        const log = await createLogWriter({ kind: "record", name });
         setMessage(
-          `Launching browser…\n${configExists ? `Reusing config: ${configPath}\n` : ""}Close the browser window to finish recording.`,
+          `Launching browser…\n${configExists ? `Reusing config: ${configPath}\n` : ""}log: ${log.path}\nClose the browser window to finish recording.`,
         );
-        await recordScenario({ cwd, url, name, configPath });
-        setMessage(`Saved scenario '${name}' to ${configPath}`);
+        const res = await recordScenario({ cwd, url, name, configPath, logPath: log.path });
+        setMessage(`Saved scenario '${res.scenarioName}' to ${configPath}\nlog: ${res.logPath}`);
         setStep("done");
       } catch (err) {
         setMessage(err instanceof Error ? err.message : String(err));
