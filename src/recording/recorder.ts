@@ -19,10 +19,16 @@ type RecordInput = {
   cwd: string;
   logPath?: string;
   signal?: AbortSignal;
+  events?: Array<"click" | "fill" | "scroll">;
+  scrollThrottleMs?: number;
 };
 
 // Capture element metadata; we build robust selectors on the Node side.
-const SELECTOR_GENERATOR = `
+function buildRecorderScript(opts: { events: Array<"click" | "fill" | "scroll">; scrollThrottleMs: number }): string {
+  const recordClick = opts.events.includes("click");
+  const recordFill = opts.events.includes("fill");
+  const recordScroll = opts.events.includes("scroll");
+  return `
 (function() {
   function getLabelText(el) {
     try {
@@ -56,18 +62,33 @@ const SELECTOR_GENERATOR = `
     return { tag, idAttr, testId, ariaLabel, nameAttr, placeholder, role, href, inputType, text, labelText };
   }
 
+  ${recordClick ? `
   document.addEventListener('click', (e) => {
     window.__logAction({ type: 'click', el: info(e.target) });
   }, true);
+  ` : ""}
 
+  ${recordFill ? `
   document.addEventListener('change', (e) => {
     // For now, assume fill if it's an input
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
        window.__logAction({ type: 'fill', el: info(e.target), value: e.target.value });
     }
   }, true);
+  ` : ""}
+
+  ${recordScroll ? `
+  let lastScrollAt = 0;
+  window.addEventListener('scroll', () => {
+    const now = Date.now();
+    if (now - lastScrollAt < ${opts.scrollThrottleMs}) return;
+    lastScrollAt = now;
+    window.__logAction({ type: 'scroll', y: window.scrollY });
+  }, { passive: true });
+  ` : ""}
 })();
 `;
+}
 
 export async function recordScenario(
   input: RecordInput,
@@ -151,7 +172,7 @@ export async function recordScenario(
     "__logAction",
     (action: unknown) => {
       try {
-        const a = action as { type?: string; el?: unknown; value?: unknown };
+        const a = action as { type?: string; el?: unknown; value?: unknown; y?: unknown };
         if (a?.type === "click" && a.el && typeof a.el === "object") {
           const { selector, note } = buildSelectorAndNote({ type: "click", el: a.el as RecordedElementInfo });
           steps.push({ type: "click", selector, ...(note ? { note } : {}) });
@@ -175,6 +196,9 @@ export async function recordScenario(
           }
           steps.push({ type: "fill", selector, value: String(a.value ?? ""), ...(note ? { note } : {}) });
           void log.write(`[${new Date().toISOString()}] fill selector=${selector} note=${note ?? ""}\n`);
+        } else if (a?.type === "scroll" && typeof a.y === "number") {
+          steps.push({ type: "scrollTo", y: Math.max(0, Math.floor(a.y)), note: "Scroll" });
+          void log.write(`[${new Date().toISOString()}] scroll y=${a.y}\n`);
         }
       } catch (e) {
         void log.write(`[${new Date().toISOString()}] ERROR building selector: ${e instanceof Error ? e.message : String(e)}\n`);
@@ -182,7 +206,9 @@ export async function recordScenario(
     },
   );
 
-  await context.addInitScript(SELECTOR_GENERATOR);
+  const events = input.events ?? ["click", "fill"];
+  const throttle = input.scrollThrottleMs ?? 300;
+  await context.addInitScript(buildRecorderScript({ events, scrollThrottleMs: throttle }));
 
   // Stop overlay (works across navigations/pages).
   await installRecordStopOverlay({

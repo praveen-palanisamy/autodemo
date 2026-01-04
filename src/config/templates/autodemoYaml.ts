@@ -67,6 +67,12 @@ stagehand:
 # Add your scenarios here.
 # Tip: Use \`autodemo record\` to generate a starter scenario from an instruction.
 scenarios: {}
+
+# Recording settings (for \`autodemo record --interactive\`)
+recording:
+  # Events to capture (click, fill, scroll)
+  events: [click, fill, scroll]
+  scrollThrottleMs: 300
 `;
 }
 

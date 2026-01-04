@@ -121,6 +121,14 @@ export async function executePlaywrightStep(opts: {
       await new Promise((r) => setTimeout(r, step.ms));
       return;
     }
+    case "scrollTo": {
+      try {
+        await page.evaluate((y) => window.scrollTo(0, y), step.y);
+      } catch {
+        // ignore
+      }
+      return;
+    }
     // Stagehand-only steps are not executed here.
     case "act":
       throw new Error("Internal error: 'act' step routed to Playwright executor");

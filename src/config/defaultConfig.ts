@@ -30,6 +30,10 @@ export function defaultConfig(): Record<string, unknown> {
         endPauseMs: 1200,
       },
     },
+    recording: {
+      events: ["click", "fill", "scroll"],
+      scrollThrottleMs: 300,
+    },
     stagehand: {
       mode: "local",
       browserbaseApiKeyEnv: "BROWSERBASE_API_KEY",

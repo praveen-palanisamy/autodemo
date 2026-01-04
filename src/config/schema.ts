@@ -96,6 +96,13 @@ const StepSleepSchema = z.object({
   note: z.string().optional(),
 });
 
+const StepScrollToSchema = z.object({
+  type: z.literal("scrollTo"),
+  y: z.number().int().nonnegative(),
+  capture: z.boolean().optional(),
+  note: z.string().optional(),
+});
+
 const CursorSchema = z.object({
   showCursor: z.boolean().default(true),
   style: z.enum(["arrow", "hand"]).default("arrow"),
@@ -135,6 +142,7 @@ export const ScenarioStepSchema = z.discriminatedUnion("type", [
   StepExpectVisibleSchema,
   StepExpectTextSchema,
   StepSleepSchema,
+  StepScrollToSchema,
 ]);
 
 export type ScenarioStep = z.infer<typeof ScenarioStepSchema>;
@@ -169,6 +177,14 @@ export const AutoDemoConfigSchema = z.object({
       recordVideo: z.boolean().default(false),
       cursor: CursorSchema.default({}),
       transitions: TransitionsSchema.default({}),
+    })
+    .default({}),
+  recording: z
+    .object({
+      // Which browser events to capture during `autodemo record --interactive`
+      events: z.array(z.enum(["click", "fill", "scroll"])).default(["click", "fill"]),
+      // Throttle scroll sampling (ms)
+      scrollThrottleMs: z.number().int().positive().default(300),
     })
     .default({}),
   stagehand: z

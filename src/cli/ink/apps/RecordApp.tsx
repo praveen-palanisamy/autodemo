@@ -5,6 +5,8 @@ import path from "node:path";
 import { recordScenario } from "../../../recording/recorder.ts";
 import { createLogWriter } from "../../../utils/logWriter.ts";
 import { setSigintAbortController } from "../../../utils/sigintManager.ts";
+import { loadConfig } from "../../../config/loadConfig.ts";
+import { readdirSync } from "node:fs";
 
 type Props = {
   cwd: string;
@@ -25,10 +27,20 @@ export function RecordApp({ cwd, defaultConfigPath, onDone, initialValues }: Pro
   const [reuseConfirmed, setReuseConfirmed] = useState(false);
   const [configExists, setConfigExists] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
+  const [configCandidates, setConfigCandidates] = useState<string[]>([]);
+  const [selectIdx, setSelectIdx] = useState(0);
+  const [configSelectMode, setConfigSelectMode] = useState<"select" | "type">("select");
 
   useEffect(() => {
     if (step === "name") setBuffer(name);
-    if (step === "configPath") setBuffer(configPath);
+    if (step === "configPath") {
+      const candidates = readdirSync(cwd).filter((f) => f.endsWith(".autodemo.yml"));
+      const withDefault = Array.from(new Set([defaultConfigPath, ...candidates])).sort();
+      setConfigCandidates([...withDefault, "<custom>"]);
+      setSelectIdx(0);
+      setConfigSelectMode("select");
+      setBuffer(configPath);
+    }
   }, [step, name, configPath]);
 
   useInput((input, key) => {
@@ -77,10 +89,20 @@ export function RecordApp({ cwd, defaultConfigPath, onDone, initialValues }: Pro
         return;
       }
       if (step === "configPath") {
-        setConfigPath(value || defaultConfigPath);
-        const abs = path.isAbsolute(value || defaultConfigPath)
-          ? value || defaultConfigPath
-          : path.join(cwd, value || defaultConfigPath);
+        if (configSelectMode === "select") {
+          const picked = configCandidates[selectIdx] ?? defaultConfigPath;
+          if (picked === "<custom>") {
+            setConfigSelectMode("type");
+            setBuffer("");
+            return;
+          }
+          setConfigPath(picked);
+        } else {
+          setConfigPath(value || defaultConfigPath);
+        }
+
+        const effective = configSelectMode === "select" ? (configCandidates[selectIdx] ?? defaultConfigPath) : value || defaultConfigPath;
+        const abs = path.isAbsolute(effective) ? effective : path.join(cwd, effective);
         const exists = existsSync(abs);
         setConfigExists(exists);
         if (exists && !reuseConfirmed) {
@@ -90,6 +112,12 @@ export function RecordApp({ cwd, defaultConfigPath, onDone, initialValues }: Pro
         }
         return;
       }
+    }
+
+    if (step === "configPath" && configSelectMode === "select") {
+      if (key.upArrow) setSelectIdx((i) => Math.max(0, i - 1));
+      if (key.downArrow) setSelectIdx((i) => Math.min(configCandidates.length - 1, i + 1));
+      return;
     }
 
     if (key.backspace || key.delete) {
@@ -111,6 +139,25 @@ export function RecordApp({ cwd, defaultConfigPath, onDone, initialValues }: Pro
         setMessage(
           `Launching browser…\n${configExists ? `Reusing config: ${configPath}\n` : ""}log: ${log.path}\nClose the browser window to finish recording.\n(Or click Stop & Save in the page, or Ctrl+C here.)`,
         );
+
+        // If config exists, read recording.events and scroll throttle.
+        let events: Array<"click" | "fill" | "scroll"> | undefined;
+        let scrollThrottleMs: number | undefined;
+        try {
+          const abs = path.isAbsolute(configPath) ? configPath : path.join(cwd, configPath);
+          if (existsSync(abs)) {
+            const { config } = await loadConfig({ cwd, configPath: abs });
+            const ev = config.recording?.events;
+            if (Array.isArray(ev)) {
+              events = ev.filter((e): e is "click" | "fill" | "scroll" => e === "click" || e === "fill" || e === "scroll");
+            }
+            const st = config.recording?.scrollThrottleMs;
+            if (typeof st === "number") scrollThrottleMs = st;
+          }
+        } catch {
+          // ignore; use defaults
+        }
+
         const res = await recordScenario({
           cwd,
           url,
@@ -118,6 +165,8 @@ export function RecordApp({ cwd, defaultConfigPath, onDone, initialValues }: Pro
           configPath,
           logPath: log.path,
           signal: abortRef.current.signal,
+          events,
+          scrollThrottleMs,
         });
         setSigintAbortController(null);
         setMessage(`Saved scenario '${res.scenarioName}' to ${configPath}\nlog: ${res.logPath}`);
@@ -148,9 +197,21 @@ export function RecordApp({ cwd, defaultConfigPath, onDone, initialValues }: Pro
       {prompt ? (
         <Box flexDirection="column">
           <Text dimColor>{prompt}</Text>
-          <Text>
-            {"> "} {buffer}
-          </Text>
+          {step === "configPath" && configSelectMode === "select" ? (
+            <Box flexDirection="column">
+              <Text dimColor>Pick a config (↑/↓ + Enter) or choose &lt;custom&gt; to type</Text>
+              {configCandidates.map((c, i) => (
+                <Text key={c} color={i === selectIdx ? "cyan" : undefined}>
+                  {i === selectIdx ? "› " : "  "}
+                  {c}
+                </Text>
+              ))}
+            </Box>
+          ) : (
+            <Text>
+              {"> "} {buffer}
+            </Text>
+          )}
           <Text dimColor>Press Enter to continue</Text>
         </Box>
       ) : step === "record" ? (
