@@ -26,9 +26,16 @@ bun run dev -- record --url http://localhost:3000 --instruction "Sign up and ope
 - **Interactive (capture clicks/typing)**:
 
 ```bash
-bun run dev -- record --interactive --url http://localhost:3000 --name signup
+bun run dev -- record --interactive --url http://localhost:3000 --name signup --out .autodemo.yml
 ```
 You can also omit flags and use the Ink wizard: `bun run dev -- record`
+
+Options:
+- `--url <url>`: base URL to open in the browser
+- `--name <scenario>`: scenario name to write (default: `recorded`)
+- `--out <path>`: config file to write/append into (default: `--config` or `./.autodemo.yml`)
+- `--instruction "<text>"`: non-interactive mode (generates a runnable scenario using `act`)
+- `--interactive`: interactive recording mode (captures clicks/fills/scrolls per config)
 
 Stopping recording:
 - Close the browser window

@@ -24,6 +24,14 @@ browser:
     clickColor: "#0076FF"
     highlightClicks: true
     clickRadius: 24
+  transitions:
+    transitionMs: 800 # delay after each step (UI settle + video pacing)
+    endPauseMs: 1200 # extra pause after final step (video tail)
+
+recording:
+  # Only used by: `autodemo record --interactive`
+  events: ["click", "fill", "scroll"]
+  scrollThrottleMs: 300
 
 scenarios:
   signup:
@@ -60,6 +68,7 @@ Playwright fallback:
 - `expectText`: `selector: string`, `text: string`
 - `sleep`: `ms: number`
 - `goto`: `url: string` (relative or absolute)
+- `scrollTo`: `y: number` (scroll Y offset in px)
 
 Common optional fields:
 - `note`: shown in the interactive demo
@@ -82,6 +91,18 @@ Notes:
 - `clickColor`: click ring hex color (`#RRGGBB`).
 - `highlightClicks`: draw a ring on click.
 - `clickRadius`: ring radius in px.
+
+### Step pacing / video feel (`browser.transitions`)
+
+AutoDemo intentionally waits between steps so screenshots and video feel human-paced:
+- `transitionMs`: applied after each step (including `act` and fallback steps).
+- `endPauseMs`: applied after the last step (useful when producing video so it doesn’t “hard cut”).
+
+### Interactive recording capture (`recording`)
+
+These knobs only affect `autodemo record --interactive`:
+- `events`: which interactions to capture (`click`, `fill`, `scroll`).
+- `scrollThrottleMs`: scroll sampling throttle; higher values reduce noise.
 
 ### `output.clean`
 

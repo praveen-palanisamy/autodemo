@@ -28,4 +28,9 @@ What the integration test does:
 - runs `autodemo run` against the fixture
 - verifies `run.json` and screenshots exist
 
+### Debugging failed runs
+
+- Look for `trace.zip` in the scenario output folder (on failure, or if `--debug`).
+- Look for run logs in `logs/` (timestamped files).
+
 

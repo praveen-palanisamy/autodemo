@@ -12,11 +12,11 @@ flowchart TD
   RUN -->|fallback steps| PW[Playwright executor]
   RUN --> CAP[Capture screenshots]
   RUN --> OUT[Write artifacts]
-  OUT --> HTML[index.html (interactive)]
+  OUT --> HTML["index.html (interactive)"]
   OUT --> JSON[run.json]
   OUT --> STEPS[steps/*.png]
-  OUT --> VID[video.mp4 (optional)]
-  OUT --> TRACE[trace.zip (on failure or --debug)]
+  OUT --> VID["video.mp4 (optional)"]
+  OUT --> TRACE["trace.zip (on failure or --debug)"]
 ```
 
 ### Key modules
@@ -28,12 +28,20 @@ flowchart TD
   - Creates Playwright session (video/tracing)
   - Executes steps via Stagehand (`act`) or Playwright fallback
   - Captures screenshot per step
-  - Writes `run.json` and `index.html`
+  - Writes `run.json` and `index.html` (+ optional video + trace)
 - **Executors**
   - Stagehand: `src/engines/stagehand/*`
   - Playwright: `src/engines/playwright/*`
 - **Output**
   - `src/output/*` (interactive HTML, run.json, video conversion)
+- **Recording (interactive authoring)**
+  - `src/recording/recorder.ts`: headed browser + event capture (click/fill/scroll)
+  - `src/recording/selector.ts`: human-first selector + step notes
+  - `src/utils/recordStopOverlay.ts`: persistent in-page **Stop & Save** control
+  - `src/utils/sigintManager.ts`: graceful Ctrl+C across CLI flows
+  - `src/utils/logWriter.ts`: timestamped logs written under `logs/`
+- **Visual overlays (captures)**
+  - `src/utils/cursorOverlay.ts`: synthetic cursor + click rings for screenshots/video
 - **MCP**
   - `src/mcp/server.ts` exposes tools over stdio
 

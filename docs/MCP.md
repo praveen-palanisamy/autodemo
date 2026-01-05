@@ -38,4 +38,9 @@ Input:
 - `headless?: boolean`
 - `configPath?: string`
 
+### Notes
+
+- Tools currently return JSON as `text` content (suitable for agent tool-use).
+- `autodemo.run` is Stagehand-first (uses `act` when present, Playwright fallback for deterministic steps).
+
 
