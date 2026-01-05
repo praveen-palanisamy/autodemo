@@ -1,0 +1,43 @@
+project:
+  name: AutoDemo Site
+  # baseUrl is supplied by CI/local scripts via --url so this stays portable.
+
+output:
+  dir: public/demos
+  clean: true
+
+browser:
+  headless: true
+  recordVideo: true
+  cursor:
+    showCursor: true
+    style: arrow
+    pointerColor: "#66A3FF"
+    clickColor: "#66A3FF"
+    highlightClicks: true
+    clickRadius: 24
+  transitions:
+    transitionMs: 700
+    endPauseMs: 1000
+
+scenarios:
+  site-landing:
+    description: "AutoDemo site: open the interactive demo and step through it"
+    steps:
+      - type: goto
+        url: /
+        note: "Open AutoDemo landing page"
+      - type: click
+        selector: "[data-testid=cta-open-demo]"
+        note: "Open interactive demo"
+      - type: waitForSelector
+        selector: "#next"
+        note: "Wait for demo UI to load"
+      - type: click
+        selector: "#next"
+        note: "Advance one step"
+      - type: sleep
+        ms: 500
+        note: "Pause for the video"
+
+

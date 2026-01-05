@@ -1,0 +1,49 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request: {}
+  workflow_dispatch: {}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install
+        run: bun install --frozen-lockfile
+
+      - name: Lint
+        run: bun run lint
+
+      - name: Typecheck
+        run: bun run typecheck
+
+      - name: Unit tests
+        run: bun run test:unit
+
+  integration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install
+        run: bun install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: bun run playwright:install
+
+      - name: Integration tests
+        run: bun run test:integration
+
+

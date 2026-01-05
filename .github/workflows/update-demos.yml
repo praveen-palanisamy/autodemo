@@ -1,0 +1,40 @@
+name: update-demos
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install
+        run: bun install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: bun run playwright:install
+
+      - name: Install ffmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
+      - name: Generate demo artifacts (site + videos)
+        run: bun run demos:update
+
+      - name: Commit updated demo artifacts
+        run: |
+          git config user.name "autodemo-bot"
+          git config user.email "autodemo-bot@users.noreply.github.com"
+          git add -f public/demos
+          git status --porcelain=v1
+          git commit -m "chore(demos): update generated walkthrough artifacts" || exit 0
+          git push
+
+

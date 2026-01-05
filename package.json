@@ -18,6 +18,7 @@
     "clean:generated": "bun run scripts/cleanGenerated.ts",
     "site:build": "bun run scripts/siteBuild.ts",
     "site:serve": "bun run scripts/siteServe.ts",
+    "demos:update": "bun run scripts/updateSiteDemos.ts",
     "doctor": "bun run ./bin/autodemo.ts doctor --no-tui",
     "mcp": "bun run ./bin/autodemo.ts mcp --no-tui",
     "e2e": "bun run test:integration"
