@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AutoDemo — Stagehand-first demo automation</title>
+    <meta
+      name="description"
+      content="AutoDemo turns a running web app into shareable interactive walkthroughs and videos. Stagehand-first, Bun-first, agent-ready via MCP."
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="wrap header">
+      <div class="brand">
+        <div class="logo" aria-hidden="true">AD</div>
+        <div>
+          <div class="title">AutoDemo</div>
+          <div class="subtitle">Stagehand-first demo automation</div>
+        </div>
+      </div>
+      <nav class="nav">
+        <a data-testid="nav-docs" href="./docs.html">Docs</a>
+        <a data-testid="nav-demo" href="./demos/signup/latest/index.html">Demo</a>
+        <a data-testid="nav-github" href="#" onclick="return false;">GitHub</a>
+      </nav>
+    </header>
+
+    <main class="wrap">
+      <section class="hero">
+        <h1>Keep demos in sync with your product.</h1>
+        <p class="lead">
+          AutoDemo generates <strong>interactive walkthroughs</strong> and <strong>videos</strong> from a
+          running web app. It’s designed for builders, teams, and tool-use agents.
+        </p>
+        <div class="cta">
+          <a data-testid="cta-open-demo" class="button" href="./demos/signup/latest/index.html">Open interactive demo</a>
+          <a class="button secondary" href="./demos/signup/latest/video.mp4">Watch video</a>
+        </div>
+        <div class="cards">
+          <div class="card">
+            <div class="cardTitle">Stagehand-first</div>
+            <div class="cardBody">Use LLM-native <code>act</code> steps, with Playwright fallbacks for precision.</div>
+          </div>
+          <div class="card">
+            <div class="cardTitle">Bun-first CLI</div>
+            <div class="cardBody">Fast iteration, Ink TUI for humans, and deterministic modes for CI.</div>
+          </div>
+          <div class="card">
+            <div class="cardTitle">Agent-ready</div>
+            <div class="cardBody">MCP server over stdio so tools/agents can list/generate/run demos.</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <h2>Outputs</h2>
+        <ul class="bullets">
+          <li><code>index.html</code> (interactive walkthrough)</li>
+          <li><code>run.json</code> (timings + step metadata)</li>
+          <li><code>steps/*.png</code> (one screenshot per step)</li>
+          <li><code>video.mp4</code> (optional) with cursor + click rings</li>
+        </ul>
+      </section>
+
+      <section class="section">
+        <h2>Try it</h2>
+        <pre class="code"><code>bunx autodemo init
+bunx autodemo run signup --url http://localhost:3000
+bunx autodemo run --interactive
+bunx autodemo mcp --no-tui</code></pre>
+        <p class="muted">
+          Tip: add stable selectors like <code>data-testid</code> for the best recordings.
+        </p>
+      </section>
+    </main>
+
+    <footer class="wrap footer">
+      <div>AutoDemo — OSS demo automation</div>
+      <div class="muted">Built with Bun, Stagehand, Playwright, Ink, and MCP.</div>
+    </footer>
+  </body>
+</html>
+
+

@@ -16,6 +16,8 @@
     "test:integration": "bun test tests/integration",
     "playwright:install": "bunx playwright install --with-deps",
     "clean:generated": "bun run scripts/cleanGenerated.ts",
+    "site:build": "bun run scripts/siteBuild.ts",
+    "site:serve": "bun run scripts/siteServe.ts",
     "doctor": "bun run ./bin/autodemo.ts doctor --no-tui",
     "mcp": "bun run ./bin/autodemo.ts mcp --no-tui",
     "e2e": "bun run test:integration"
