@@ -1,0 +1,52 @@
+name: release
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "Version bump (patch|minor|major)"
+        required: true
+        default: "patch"
+
+permissions:
+  contents: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install
+        run: bun install --frozen-lockfile
+
+      - name: Validate
+        run: |
+          bun run lint
+          bun run typecheck
+          bun run test:unit
+
+      - name: Prepare version + changelog
+        run: bun run release:prepare -- --bump=${{ inputs.bump }}
+
+      - name: Commit + tag
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          git config user.name "autodemo-bot"
+          git config user.email "autodemo-bot@users.noreply.github.com"
+          git add package.json bun.lock CHANGELOG.md src/version.ts
+          git commit -m "chore(release): v$VERSION"
+          git tag "v$VERSION"
+          git push --follow-tags
+
+      - name: Draft GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          generate_release_notes: true
+
+

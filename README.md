@@ -48,6 +48,10 @@ bun add -D autodemo
 bunx autodemo --help
 ```
 
+CI/release notes:
+- GitHub Actions: `.github/workflows/*`
+- Local CI runner (optional): `docs/CI_LOCAL.md` (act + Podman)
+
 ---
 
 ## How it works

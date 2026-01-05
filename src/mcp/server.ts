@@ -10,11 +10,12 @@ import { loadConfig } from "../config/loadConfig.ts";
 import { defaultAutodemoYamlTemplate } from "../config/templates/autodemoYaml.ts";
 import { upsertScenarioFromInstruction } from "../scenario/authoring.ts";
 import { runScenario } from "../scenario/runner.ts";
+import { VERSION } from "../version.ts";
 
 export async function startMcpServer(): Promise<void> {
   const mcp = new McpServer({
     name: "autodemo",
-    version: "0.1.0",
+    version: VERSION,
   });
 
   mcp.registerTool(

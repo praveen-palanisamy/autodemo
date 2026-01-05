@@ -1,10 +1,33 @@
 {
   "name": "autodemo",
   "version": "0.1.0",
-  "private": true,
+  "description": "Stagehand-first demo automation CLI. Generate interactive walkthroughs + videos from a running web app. Bun-first, agent-ready via MCP.",
+  "keywords": [
+    "stagehand",
+    "playwright",
+    "bun",
+    "typescript",
+    "mcp",
+    "automation",
+    "demo",
+    "nextjs",
+    "cli",
+    "ink",
+    "agents",
+    "llm-tools"
+  ],
+  "license": "MIT",
+  "private": false,
   "type": "module",
   "bin": {
     "autodemo": "./bin/autodemo.ts"
+  },
+  "files": ["bin", "src", "docs", "predev-docs", "configs", "scripts", "README.md", "CHANGELOG.md", "bun.lock"],
+  "engines": {
+    "bun": ">=1.3.0"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "scripts": {
     "dev": "bun run ./bin/autodemo.ts",
@@ -19,6 +42,7 @@
     "site:build": "bun run scripts/siteBuild.ts",
     "site:serve": "bun run scripts/siteServe.ts",
     "demos:update": "bun run scripts/updateSiteDemos.ts",
+    "release:prepare": "bun run scripts/release.ts",
     "doctor": "bun run ./bin/autodemo.ts doctor --no-tui",
     "mcp": "bun run ./bin/autodemo.ts mcp --no-tui",
     "e2e": "bun run test:integration"

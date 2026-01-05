@@ -1,4 +1,5 @@
 import type { ParsedCli } from "../parse.ts";
+import { VERSION } from "../../version.ts";
 
 export function printHelp(parsed: ParsedCli): void {
   const command = parsed.command;
@@ -21,7 +22,7 @@ export function printHelp(parsed: ParsedCli): void {
         : [];
 
   const lines = [
-    "autodemo — Stagehand-first demo automation (v0.1)",
+    `autodemo — Stagehand-first demo automation (v${VERSION})`,
     "",
     "Usage:",
     "  autodemo <command> [options]",
