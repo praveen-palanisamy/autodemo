@@ -49,6 +49,13 @@ browser:
     transitionMs: 800
     # Extra pause after the final step (keeps video from ending abruptly).
     endPauseMs: 1200
+
+# Optional Playwright storage state for authenticated demos.
+# Keep these files ignored because they may contain session tokens.
+auth:
+  statePath: .autodemo/state/local.json
+  saveState: false
+
 # Hints:
 # - Interactive record: bun run dev -- record --interactive --url http://localhost:3000 --name signup
 #   Close the opened browser window to save your recording.

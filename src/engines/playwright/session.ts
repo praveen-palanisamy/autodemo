@@ -1,4 +1,5 @@
 import path from "node:path";
+import { existsSync } from "node:fs";
 import type { Browser, BrowserContext, Page } from "@playwright/test";
 
 export type PageVideo = ReturnType<Page["video"]>;
@@ -17,6 +18,7 @@ export type CreatePlaywrightSessionOpts = {
   viewport: { width: number; height: number };
   recordVideo: boolean;
   enableTracing: boolean;
+  storageStatePath?: string;
 };
 
 export async function createPlaywrightSession(opts: CreatePlaywrightSessionOpts): Promise<PlaywrightSession> {
@@ -27,6 +29,7 @@ export async function createPlaywrightSession(opts: CreatePlaywrightSessionOpts)
 
   const context = await browser.newContext({
     viewport: opts.viewport,
+    ...(opts.storageStatePath && existsSync(opts.storageStatePath) ? { storageState: opts.storageStatePath } : {}),
     ...(opts.recordVideo
       ? {
           recordVideo: {

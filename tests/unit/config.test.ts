@@ -24,6 +24,11 @@ scenarios:
     steps:
       - type: goto
         url: /
+        asset:
+          name: landing-page
+      - type: screenshot
+        name: hero-panel
+        selector: "[data-autodemo=hero]"
 `,
     "utf8",
   );
@@ -32,6 +37,12 @@ scenarios:
   expect(config.project.name).toBe("TestApp");
   expect(config.output.dir).toBe(".autodemo-out/demos");
   expect(Object.keys(config.scenarios)).toEqual(["hello"]);
+  const screenshotStep = config.scenarios.hello.steps[1];
+  expect(screenshotStep?.type).toBe("screenshot");
+  if (screenshotStep?.type === "screenshot") {
+    expect(screenshotStep.name).toBe("hero-panel");
+  }
+  expect(config.auth.saveState).toBe(false);
 });
 
 

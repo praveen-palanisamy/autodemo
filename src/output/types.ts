@@ -14,8 +14,17 @@ export type RunJsonStep = {
   instruction?: string;
   selector?: string;
   text?: string;
+  assetPath?: string;
   error?: { message: string };
   note?: string;
+};
+
+export type RunJsonAsset = {
+  name: string;
+  path: string;
+  stepIndex: number;
+  selector?: string;
+  fullPage?: boolean;
 };
 
 export type RunJson = {
@@ -32,6 +41,7 @@ export type RunJson = {
     videoMp4Path?: string;
     traceZipPath?: string;
     ffmpegLogPath?: string;
+    assets?: RunJsonAsset[];
   };
 };
 

@@ -28,6 +28,12 @@ browser:
     transitionMs: 800 # delay after each step (UI settle + video pacing)
     endPauseMs: 1200 # extra pause after final step (video tail)
 
+auth:
+  # Optional Playwright storage state for authenticated demos.
+  # Keep these files ignored because they may contain session tokens.
+  statePath: .autodemo/state/local.json
+  saveState: false
+
 recording:
   # Only used by: `autodemo record --interactive`
   events: ["click", "fill", "scroll"]
@@ -49,6 +55,10 @@ scenarios:
         selector: "[data-testid=signup-button]"
       - type: waitFor
         text: "Dashboard"
+      - type: screenshot
+        name: dashboard-card
+        selector: "[data-autodemo=dashboard-card]"
+        note: "Capture reusable marketing card"
 ```
 
 ### Step types
@@ -69,10 +79,12 @@ Playwright fallback:
 - `sleep`: `ms: number`
 - `goto`: `url: string` (relative or absolute)
 - `scrollTo`: `y: number` (scroll Y offset in px)
+- `screenshot`: `name: string`, optional `selector`, optional `fullPage`
 
 Common optional fields:
 - `note`: shown in the interactive demo
 - `capture: false`: disables screenshot capture for that step
+- `asset`: `{ name, selector?, fullPage? }`, emits a named PNG under `assets/<name>.png` after the step succeeds
 
 ### Stagehand config
 
@@ -91,6 +103,44 @@ Notes:
 - `clickColor`: click ring hex color (`#RRGGBB`).
 - `highlightClicks`: draw a ring on click.
 - `clickRadius`: ring radius in px.
+
+### Auth state (`auth`)
+
+`auth.statePath` points to a Playwright storage state file. When the file exists, AutoDemo loads it before the first step. When `auth.saveState: true`, AutoDemo writes the browser state after a successful run.
+
+Use this for reproducible authenticated product demos:
+
+```yaml
+auth:
+  statePath: .autodemo/state/verber-studio.local.json
+  saveState: true
+```
+
+State files may contain cookies and local storage tokens, so keep them under ignored paths.
+
+### Named marketing captures
+
+Use `type: screenshot` when a scenario needs to produce a reusable asset without performing an interaction:
+
+```yaml
+- type: screenshot
+  name: brand-dna-panel
+  selector: "[data-autodemo=brand-dna-panel]"
+  capture: false
+  note: "Brand DNA panel for homepage composition"
+```
+
+Use `asset` on an interaction step when the capture should happen immediately after a click/fill/wait:
+
+```yaml
+- type: waitFor
+  text: "Campaign ready"
+  asset:
+    name: campaign-output
+    selector: "[data-autodemo=campaign-output]"
+```
+
+Named captures are written to `output.dir/<scenario>/latest/assets/*.png` and referenced in `run.json`.
 
 ### Step pacing / video feel (`browser.transitions`)
 

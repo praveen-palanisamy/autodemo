@@ -129,6 +129,8 @@ export async function executePlaywrightStep(opts: {
       }
       return;
     }
+    case "screenshot":
+      return;
     // Stagehand-only steps are not executed here.
     case "act":
       throw new Error("Internal error: 'act' step routed to Playwright executor");

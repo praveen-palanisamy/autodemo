@@ -9,7 +9,7 @@ import {
 import { executePlaywrightStep } from "../engines/playwright/execute.ts";
 import { createStagehandSession, closeStagehandSession } from "../engines/stagehand/session.ts";
 import { executeStagehandStep } from "../engines/stagehand/execute.ts";
-import type { RunJson, RunJsonStep, RunStatus } from "../output/types.ts";
+import type { RunJson, RunJsonAsset, RunJsonStep, RunStatus } from "../output/types.ts";
 import { scenarioLatestDir, stepScreenshotPath, stepsDir } from "../output/paths.ts";
 import { writeInteractiveHtml, writeRunJson } from "../output/writeArtifacts.ts";
 import { convertWebmToMp4, isFfmpegAvailable } from "../output/video.ts";
@@ -43,6 +43,111 @@ export type RunScenarioResult = {
   failureMessage?: string;
 };
 
+type AssetCapture = {
+  name: string;
+  selector?: string;
+  fullPage?: boolean;
+};
+
+function resolveCwdPath(filePath: string): string {
+  return path.isAbsolute(filePath) ? filePath : path.join(process.cwd(), filePath);
+}
+
+function assetPath(outDir: string, name: string): { abs: string; rel: string } {
+  const rel = path.join("assets", `${name}.png`);
+  return { abs: path.join(outDir, rel), rel };
+}
+
+function assetCaptureForStep(step: ScenarioStep): AssetCapture | undefined {
+  if (step.type === "screenshot") {
+    return {
+      name: step.name,
+      selector: step.selector,
+      fullPage: step.fullPage,
+    };
+  }
+
+  return "asset" in step && step.asset
+    ? {
+        name: step.asset.name,
+        selector: step.asset.selector,
+        fullPage: step.asset.fullPage,
+      }
+    : undefined;
+}
+
+async function captureAsset(opts: {
+  page: import("@playwright/test").Page;
+  outDir: string;
+  stepIndex: number;
+  capture: AssetCapture;
+}): Promise<RunJsonAsset> {
+  const target = assetPath(opts.outDir, opts.capture.name);
+  await ensureDir(path.dirname(target.abs));
+
+  const restoreHiddenOverlays = await opts.page.evaluate(() => {
+    const selectors = [
+      "#__autodemo-cursor",
+      "#__autodemo-click-ring",
+      "[data-sonner-toaster]",
+      "[data-sonner-toast]",
+      "nextjs-portal",
+      "[data-nextjs-toast]",
+    ];
+    const changed: Array<{ element: HTMLElement; visibility: string; display: string }> = [];
+    for (const selector of selectors) {
+      for (const element of Array.from(document.querySelectorAll<HTMLElement>(selector))) {
+        changed.push({
+          element,
+          visibility: element.style.visibility,
+          display: element.style.display,
+        });
+        element.style.visibility = "hidden";
+        element.style.display = "none";
+      }
+    }
+    return changed.map((_, index) => index);
+  });
+
+  try {
+    if (opts.capture.selector) {
+      await opts.page.locator(opts.capture.selector).first().screenshot({ path: target.abs });
+    } else {
+      await opts.page.screenshot({
+        path: target.abs,
+        fullPage: opts.capture.fullPage ?? false,
+      });
+    }
+  } finally {
+    if (restoreHiddenOverlays.length) {
+      await opts.page.evaluate(() => {
+        const selectors = [
+          "#__autodemo-cursor",
+          "#__autodemo-click-ring",
+          "[data-sonner-toaster]",
+          "[data-sonner-toast]",
+          "nextjs-portal",
+          "[data-nextjs-toast]",
+        ];
+        for (const selector of selectors) {
+          for (const element of Array.from(document.querySelectorAll<HTMLElement>(selector))) {
+            element.style.visibility = "";
+            element.style.display = "";
+          }
+        }
+      });
+    }
+  }
+
+  return {
+    name: opts.capture.name,
+    path: target.rel,
+    stepIndex: opts.stepIndex,
+    ...(opts.capture.selector ? { selector: opts.capture.selector } : {}),
+    fullPage: opts.capture.fullPage ?? false,
+  };
+}
+
 export async function runScenario(opts: RunScenarioOpts): Promise<RunScenarioResult> {
   const scenario = opts.config.scenarios[opts.scenarioName];
   if (!scenario) {
@@ -66,6 +171,7 @@ export async function runScenario(opts: RunScenarioOpts): Promise<RunScenarioRes
       : undefined;
 
   const headless = opts.headless ?? opts.config.browser.headless;
+  const storageStatePath = opts.config.auth.statePath ? resolveCwdPath(opts.config.auth.statePath) : undefined;
 
   const stagehandSession = needsStagehand
     ? await createStagehandSession({
@@ -91,6 +197,7 @@ export async function runScenario(opts: RunScenarioOpts): Promise<RunScenarioRes
         viewport: opts.config.browser.viewport,
         recordVideo: opts.config.browser.recordVideo,
         enableTracing: true, // needed to export trace on failure
+        storageStatePath,
       });
 
   // Ensure cursor is visible in videos/screenshots and highlight clicks.
@@ -114,6 +221,7 @@ export async function runScenario(opts: RunScenarioOpts): Promise<RunScenarioRes
   }
 
   const steps: RunJsonStep[] = [];
+  const assets: RunJsonAsset[] = [];
   let status: RunStatus = "success";
   let failureMessage: string | undefined;
   let traceZipPathRel: string | undefined;
@@ -136,6 +244,19 @@ export async function runScenario(opts: RunScenarioOpts): Promise<RunScenarioRes
         await executePlaywrightStep({ page: session.page, baseUrl: opts.baseUrl, step });
       }
 
+      const namedCapture = assetCaptureForStep(step);
+      const namedAsset = namedCapture
+        ? await captureAsset({
+            page: session.page,
+            outDir,
+            stepIndex: i,
+            capture: namedCapture,
+          })
+        : undefined;
+      if (namedAsset) {
+        assets.push(namedAsset);
+      }
+
       const screenshot = step.capture === false ? undefined : stepScreenshotPath(outDir, i);
       if (screenshot) {
         await session.page.screenshot({ path: screenshot.abs, fullPage: true });
@@ -151,6 +272,8 @@ export async function runScenario(opts: RunScenarioOpts): Promise<RunScenarioRes
         step.type === "expectText"
           ? step.selector
           : step.type === "press"
+            ? step.selector
+          : step.type === "screenshot"
             ? step.selector
             : undefined;
 
@@ -175,6 +298,7 @@ export async function runScenario(opts: RunScenarioOpts): Promise<RunScenarioRes
         ...(selector ? { selector } : {}),
         ...(step.type === "waitFor" ? { text: step.text } : {}),
         ...(step.type === "expectText" ? { text: step.text } : {}),
+        ...(namedAsset ? { assetPath: namedAsset.path } : {}),
       });
     } catch (err) {
       status = "failure";
@@ -216,6 +340,16 @@ export async function runScenario(opts: RunScenarioOpts): Promise<RunScenarioRes
       });
 
       break;
+    }
+  }
+
+  if (status === "success" && opts.config.auth.saveState && storageStatePath) {
+    try {
+      await ensureDir(path.dirname(storageStatePath));
+      await session.context.storageState({ path: storageStatePath });
+    } catch (err) {
+      status = "failure";
+      failureMessage = `Failed to save auth state: ${err instanceof Error ? err.message : String(err)}`;
     }
   }
 
@@ -285,6 +419,7 @@ export async function runScenario(opts: RunScenarioOpts): Promise<RunScenarioRes
       interactiveHtmlPath: "index.html",
       runJsonPath: "run.json",
       ffmpegLogPath: path.relative(process.cwd(), logPath),
+      ...(assets.length ? { assets } : {}),
       ...(videoMp4PathRel ? { videoMp4Path: videoMp4PathRel } : {}),
       ...(traceZipPathRel ? { traceZipPath: traceZipPathRel } : {}),
     },

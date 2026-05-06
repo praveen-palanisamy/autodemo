@@ -5,11 +5,21 @@ const ViewportSchema = z.object({
   height: z.number().int().positive(),
 });
 
+const AssetCaptureSchema = z.object({
+  name: z
+    .string()
+    .min(1)
+    .regex(/^[a-zA-Z0-9][a-zA-Z0-9._-]*$/, "Use letters, numbers, dots, underscores, or hyphens"),
+  selector: z.string().min(1).optional(),
+  fullPage: z.boolean().default(false),
+});
+
 const StepGotoSchema = z.object({
   type: z.literal("goto"),
   url: z.string().min(1),
   capture: z.boolean().optional(),
   note: z.string().optional(),
+  asset: AssetCaptureSchema.optional(),
 });
 
 const StepActSchema = z.object({
@@ -17,6 +27,7 @@ const StepActSchema = z.object({
   instruction: z.string().min(1),
   capture: z.boolean().optional(),
   note: z.string().optional(),
+  asset: AssetCaptureSchema.optional(),
 });
 
 const StepClickSchema = z.object({
@@ -24,6 +35,7 @@ const StepClickSchema = z.object({
   selector: z.string().min(1),
   capture: z.boolean().optional(),
   note: z.string().optional(),
+  asset: AssetCaptureSchema.optional(),
 });
 
 const StepFillSchema = z.object({
@@ -32,6 +44,7 @@ const StepFillSchema = z.object({
   value: z.string(),
   capture: z.boolean().optional(),
   note: z.string().optional(),
+  asset: AssetCaptureSchema.optional(),
 });
 
 const StepHoverSchema = z.object({
@@ -39,6 +52,7 @@ const StepHoverSchema = z.object({
   selector: z.string().min(1),
   capture: z.boolean().optional(),
   note: z.string().optional(),
+  asset: AssetCaptureSchema.optional(),
 });
 
 const StepPressSchema = z.object({
@@ -47,6 +61,7 @@ const StepPressSchema = z.object({
   selector: z.string().optional(),
   capture: z.boolean().optional(),
   note: z.string().optional(),
+  asset: AssetCaptureSchema.optional(),
 });
 
 const StepSelectSchema = z.object({
@@ -55,6 +70,7 @@ const StepSelectSchema = z.object({
   values: z.array(z.string()).min(1),
   capture: z.boolean().optional(),
   note: z.string().optional(),
+  asset: AssetCaptureSchema.optional(),
 });
 
 const StepWaitForSelectorSchema = z.object({
@@ -63,6 +79,7 @@ const StepWaitForSelectorSchema = z.object({
   timeoutMs: z.number().int().positive().optional(),
   capture: z.boolean().optional(),
   note: z.string().optional(),
+  asset: AssetCaptureSchema.optional(),
 });
 
 const StepWaitForTextSchema = z.object({
@@ -71,6 +88,7 @@ const StepWaitForTextSchema = z.object({
   timeoutMs: z.number().int().positive().optional(),
   capture: z.boolean().optional(),
   note: z.string().optional(),
+  asset: AssetCaptureSchema.optional(),
 });
 
 const StepExpectVisibleSchema = z.object({
@@ -79,6 +97,7 @@ const StepExpectVisibleSchema = z.object({
   timeoutMs: z.number().int().positive().optional(),
   capture: z.boolean().optional(),
   note: z.string().optional(),
+  asset: AssetCaptureSchema.optional(),
 });
 
 const StepExpectTextSchema = z.object({
@@ -87,6 +106,7 @@ const StepExpectTextSchema = z.object({
   text: z.string().min(1),
   capture: z.boolean().optional(),
   note: z.string().optional(),
+  asset: AssetCaptureSchema.optional(),
 });
 
 const StepSleepSchema = z.object({
@@ -94,11 +114,22 @@ const StepSleepSchema = z.object({
   ms: z.number().int().nonnegative(),
   capture: z.boolean().optional(),
   note: z.string().optional(),
+  asset: AssetCaptureSchema.optional(),
 });
 
 const StepScrollToSchema = z.object({
   type: z.literal("scrollTo"),
   y: z.number().int().nonnegative(),
+  capture: z.boolean().optional(),
+  note: z.string().optional(),
+  asset: AssetCaptureSchema.optional(),
+});
+
+const StepScreenshotSchema = z.object({
+  type: z.literal("screenshot"),
+  name: AssetCaptureSchema.shape.name,
+  selector: z.string().min(1).optional(),
+  fullPage: z.boolean().default(false),
   capture: z.boolean().optional(),
   note: z.string().optional(),
 });
@@ -143,6 +174,7 @@ export const ScenarioStepSchema = z.discriminatedUnion("type", [
   StepExpectTextSchema,
   StepSleepSchema,
   StepScrollToSchema,
+  StepScreenshotSchema,
 ]);
 
 export type ScenarioStep = z.infer<typeof ScenarioStepSchema>;
@@ -177,6 +209,12 @@ export const AutoDemoConfigSchema = z.object({
       recordVideo: z.boolean().default(false),
       cursor: CursorSchema.default({}),
       transitions: TransitionsSchema.default({}),
+    })
+    .default({}),
+  auth: z
+    .object({
+      statePath: z.string().min(1).optional(),
+      saveState: z.boolean().default(false),
     })
     .default({}),
   recording: z
