@@ -48,7 +48,7 @@ export async function executePlaywrightStep(opts: {
     case "goto": {
       const targetUrl = resolveUrl(baseUrl, step.url);
       try {
-        await page.goto(targetUrl, { waitUntil: "domcontentloaded" });
+        await page.goto(targetUrl, { waitUntil: "domcontentloaded", timeout: 90_000 });
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         if (msg.includes("ERR_CONNECTION_REFUSED") || msg.includes("ECONNREFUSED")) {

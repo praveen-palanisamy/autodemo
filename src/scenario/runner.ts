@@ -346,7 +346,10 @@ export async function runScenario(opts: RunScenarioOpts): Promise<RunScenarioRes
   if (status === "success" && opts.config.auth.saveState && storageStatePath) {
     try {
       await ensureDir(path.dirname(storageStatePath));
-      await session.context.storageState({ path: storageStatePath });
+      await session.context.storageState({
+        path: storageStatePath,
+        indexedDB: true,
+      });
     } catch (err) {
       status = "failure";
       failureMessage = `Failed to save auth state: ${err instanceof Error ? err.message : String(err)}`;
