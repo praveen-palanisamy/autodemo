@@ -230,6 +230,18 @@ export async function runScenario(opts: RunScenarioOpts): Promise<RunScenarioRes
   const logsDir = path.join(process.cwd(), "logs");
   await mkdir(logsDir, { recursive: true });
   const logPath = path.join(logsDir, `${Date.now()}_${opts.scenarioName}.log`);
+  session.page.on("console", (msg) => {
+    void appendFile(
+      logPath,
+      `[${new Date().toISOString()}] CONSOLE ${msg.type()} ${msg.text()}\n`,
+    ).catch(() => {});
+  });
+  session.page.on("pageerror", (err) => {
+    void appendFile(
+      logPath,
+      `[${new Date().toISOString()}] PAGEERROR ${err.message}\n${err.stack ?? ""}\n`,
+    ).catch(() => {});
+  });
 
   for (let i = 0; i < scenario.steps.length; i++) {
     const step = scenario.steps[i] as ScenarioStep;

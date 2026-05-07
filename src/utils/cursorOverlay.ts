@@ -34,8 +34,10 @@ function cursorSvg(style: "arrow" | "hand", color: string): string {
 
 const OVERLAY_SCRIPT = `
 (function() {
+  function installAutodemoCursorOverlay() {
   const existing = document.getElementById("__autodemo-cursor");
   if (existing) return;
+  const parent = document.body || document.documentElement;
   const cursor = document.createElement("div");
   cursor.id = "__autodemo-cursor";
   cursor.style.position = "fixed";
@@ -61,8 +63,8 @@ const OVERLAY_SCRIPT = `
   ring.style.transform = "translate(-50%, -50%)";
   ring.style.display = "none";
 
-  document.documentElement.appendChild(cursor);
-  document.documentElement.appendChild(ring);
+  parent.appendChild(cursor);
+  parent.appendChild(ring);
 
   let ringTimeout;
   function setCursorXY(x, y) {
@@ -102,6 +104,13 @@ const OVERLAY_SCRIPT = `
   window.__autodemoClickRing = function(x, y) {
     showRing(x, y);
   };
+  }
+
+  if (document.readyState === "complete") {
+    installAutodemoCursorOverlay();
+  } else {
+    window.addEventListener("load", installAutodemoCursorOverlay, { once: true });
+  }
 })();
 `;
 

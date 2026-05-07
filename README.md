@@ -1,8 +1,8 @@
 ## AutoDemo
 
-**Stagehand-first, Bun-first demo automation.**
+AutoDemo helps to automate generating interactive walkthroughs and demo videos for your web apps and websites using browser automation, optionally powered by your favourite AI models.
 
-AutoDemo turns a running web app + a short scenario into **shareable demo artifacts**:
+AutoDemo turns a web app + a short description into **shareable demo artifacts**:
 - **Interactive walkthrough** (`index.html` + step screenshots)
 - **Run metadata** (`run.json`) for debugging + reproducibility
 - Optional **video** (`video.mp4`) with a visible cursor + click rings
@@ -38,14 +38,22 @@ bun run dev -- run signup
 
 ### Install (as a tool)
 
-AutoDemo is **Bun-first**.
-
 ```bash
 # In your app repo
+# Using bun
 bun add -D autodemo
+# or using npm
+npm add -D autodemo
+# pnpm
+pnpm add -D autodemo
+# Yarn
+yarn add -D autodemo
+```
 
+```bash
 # Run
 bunx autodemo --help
+#npx autodemo --help
 ```
 
 CI/release notes:
@@ -56,13 +64,17 @@ CI/release notes:
 
 ## How it works
 
-- **Stagehand-first**: `type: act` steps use Stagehand (LLM-native, self-healing).
-- **Playwright fallback**: deterministic steps (`click`, `fill`, `waitForSelector`, …) for precision and reliability.
-- **Outputs are static files**: check them into `public/`, upload as artifacts, or publish via GitHub Pages.
+Autodemo `record` command enables recording or generating a scenario file describing what needs to be captured in the demo.
 
-See:
-- `docs/ARCHITECTURE.md`
-- `predev-docs/PRD_AUTODEMO.md` (v0.1 goals/spec)
+The recording can be done through user/agent live demonstrations or auto generated using a VLM/LLM.
+
+In live user/agent demonstration, the user/agent interacts with the web app/site and the trajectories get recorded automatically using Playwright into a scenario file with deterministic steps (`click`, `fill`, `waitForSelector`, …) for precision and reliability.
+
+In auto mode, based on a desired demo description in natural language, a AI model using Stagehand generates scenarios with `act` steps which can be acted by the AI agent.
+
+For more details, please see:
+
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
 
 ---
 
