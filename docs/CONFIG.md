@@ -15,7 +15,7 @@ output:
 
 browser:
   headless: false
-  viewport: { width: 1440, height: 900 }
+  viewport: { width: 1600, height: 900 } # 16:9 avoids letterboxing in marketing/video players
   recordVideo: false
   cursor:
     showCursor: true
@@ -48,6 +48,8 @@ scenarios:
       - type: fill
         selector: "[data-testid=email]"
         value: "demo@example.com"
+        typing: true
+        delayMs: 45
       - type: fill
         selector: "[data-testid=password]"
         value: "password"
@@ -64,11 +66,13 @@ scenarios:
 ### Step types
 
 Stagehand-first:
+
 - `act`: `instruction: string`
 
 Playwright fallback:
+
 - `click`: `selector: string`
-- `fill`: `selector: string`, `value: string`
+- `fill`: `selector: string`, `value: string`, optional `typing: true`, optional `delayMs`
 - `hover`: `selector: string`
 - `press`: `key: string`, optional `selector`
 - `select`: `selector: string`, `values: string[]`
@@ -78,10 +82,13 @@ Playwright fallback:
 - `expectText`: `selector: string`, `text: string`
 - `sleep`: `ms: number`
 - `goto`: `url: string` (relative or absolute)
-- `scrollTo`: `y: number` (scroll Y offset in px)
+- `scrollTo`: `y: number` (scroll Y offset in px), optional `behavior: smooth`, optional `durationMs`
+- `scrollIntoView`: `selector: string`, optional `behavior`, optional `block`
+- `narrate`: `text: string`, optional `ms` (temporary on-screen story caption)
 - `screenshot`: `name: string`, optional `selector`, optional `fullPage`
 
 Common optional fields:
+
 - `note`: shown in the interactive demo
 - `capture: false`: disables screenshot capture for that step
 - `asset`: `{ name, selector?, fullPage? }`, emits a named PNG under `assets/<name>.png` after the step succeeds
@@ -91,12 +98,14 @@ Common optional fields:
 AutoDemo supports Stagehand steps via `type: act`.
 
 Notes:
+
 - Stagehand’s upstream docs recommend **Node** over Bun for maximum Playwright compatibility; we still run under **Bun** by default.
 - If you run `act` steps, you’ll typically need an LLM provider key (e.g., `OPENAI_API_KEY`) available in your environment.
 
 ### Cursor overlay (videos/screenshots)
 
 `browser.cursor` controls the custom pointer overlay that is visible in screenshots and videos (headless or headed):
+
 - `showCursor`: show a synthetic pointer so the cursor is visible in recordings.
 - `style`: `arrow | hand`.
 - `pointerColor`: pointer hex color (`#RRGGBB`).
@@ -145,12 +154,14 @@ Named captures are written to `output.dir/<scenario>/latest/assets/*.png` and re
 ### Step pacing / video feel (`browser.transitions`)
 
 AutoDemo intentionally waits between steps so screenshots and video feel human-paced:
+
 - `transitionMs`: applied after each step (including `act` and fallback steps).
 - `endPauseMs`: applied after the last step (useful when producing video so it doesn’t “hard cut”).
 
 ### Interactive recording capture (`recording`)
 
 These knobs only affect `autodemo record --interactive`:
+
 - `events`: which interactions to capture (`click`, `fill`, `scroll`).
 - `scrollThrottleMs`: scroll sampling throttle; higher values reduce noise.
 
@@ -161,5 +172,3 @@ When `output.clean: true`, AutoDemo **deletes the previous output folder for the
 - `output.dir/<scenario>/latest`
 
 This keeps `latest/` consistent and avoids stale screenshots/videos lingering between runs.
-
-

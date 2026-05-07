@@ -52,12 +52,16 @@ const OVERLAY_SCRIPT = `
   cursor.style.display = "block";
   cursor.style.left = "24px";
   cursor.style.top = "24px";
+  if (window.__autodemoCursorDataUrl) {
+    cursor.style.backgroundImage = 'url("' + window.__autodemoCursorDataUrl + '")';
+  }
 
   const ring = document.createElement("div");
   ring.id = "__autodemo-click-ring";
   ring.style.position = "fixed";
   ring.style.borderRadius = "50%";
-  ring.style.border = "2px solid rgba(0, 122, 255, 0.8)";
+  ring.style.border = "4px solid rgba(0, 122, 255, 0.95)";
+  ring.style.boxShadow = "0 0 0 10px rgba(0, 122, 255, 0.18), 0 0 32px rgba(0, 122, 255, 0.55)";
   ring.style.pointerEvents = "none";
   ring.style.zIndex = "2147483647";
   ring.style.transform = "translate(-50%, -50%)";
@@ -82,15 +86,15 @@ const OVERLAY_SCRIPT = `
     ring.style.height = baseRadius * 2 + "px";
     ring.style.borderColor = window.__autodemoClickColor || "rgba(0, 122, 255, 0.8)";
     ring.style.opacity = "1";
-    ring.style.transition = "transform 240ms ease-out, opacity 420ms ease-out";
-    ring.style.transform = "translate(-50%, -50%) scale(1.35)";
+    ring.style.transition = "transform 360ms ease-out, opacity 700ms ease-out";
+    ring.style.transform = "translate(-50%, -50%) scale(1.55)";
     clearTimeout(ringTimeout);
     ringTimeout = setTimeout(() => {
       ring.style.opacity = "0";
       ringTimeout = setTimeout(() => {
         ring.style.display = "none";
-      }, 250);
-    }, 420);
+      }, 320);
+    }, 760);
   }
 
   document.addEventListener("mousedown", (e) => {
@@ -121,6 +125,7 @@ export async function installCursorOverlay(page: Page, opts: CursorOptions): Pro
   const svg = cursorSvg(opts.style, pointerColor);
   const dataUrl = svgToDataUrl(svg);
   const script = `
+    window.__autodemoCursorDataUrl = ${JSON.stringify(dataUrl)};
     window.__autodemoClickRadius = ${opts.clickRadius};
     window.__autodemoHighlightClicks = ${opts.highlightClicks};
     window.__autodemoClickColor = ${JSON.stringify(clickColor)};
@@ -143,5 +148,3 @@ export async function installCursorOverlay(page: Page, opts: CursorOptions): Pro
     }
   });
 }
-
-

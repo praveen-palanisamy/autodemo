@@ -42,6 +42,11 @@ const StepFillSchema = z.object({
   type: z.literal("fill"),
   selector: z.string().min(1),
   value: z.string(),
+  /**
+   * Type text character-by-character for product-demo videos instead of replacing it instantly.
+   */
+  typing: z.boolean().optional(),
+  delayMs: z.number().int().nonnegative().optional(),
   capture: z.boolean().optional(),
   note: z.string().optional(),
   asset: AssetCaptureSchema.optional(),
@@ -120,6 +125,27 @@ const StepSleepSchema = z.object({
 const StepScrollToSchema = z.object({
   type: z.literal("scrollTo"),
   y: z.number().int().nonnegative(),
+  behavior: z.enum(["auto", "smooth"]).optional(),
+  durationMs: z.number().int().positive().optional(),
+  capture: z.boolean().optional(),
+  note: z.string().optional(),
+  asset: AssetCaptureSchema.optional(),
+});
+
+const StepScrollIntoViewSchema = z.object({
+  type: z.literal("scrollIntoView"),
+  selector: z.string().min(1),
+  behavior: z.enum(["auto", "smooth"]).optional(),
+  block: z.enum(["start", "center", "end", "nearest"]).optional(),
+  capture: z.boolean().optional(),
+  note: z.string().optional(),
+  asset: AssetCaptureSchema.optional(),
+});
+
+const StepNarrateSchema = z.object({
+  type: z.literal("narrate"),
+  text: z.string().min(1),
+  ms: z.number().int().positive().optional(),
   capture: z.boolean().optional(),
   note: z.string().optional(),
   asset: AssetCaptureSchema.optional(),
@@ -174,6 +200,8 @@ export const ScenarioStepSchema = z.discriminatedUnion("type", [
   StepExpectTextSchema,
   StepSleepSchema,
   StepScrollToSchema,
+  StepScrollIntoViewSchema,
+  StepNarrateSchema,
   StepScreenshotSchema,
 ]);
 
@@ -181,6 +209,13 @@ export type ScenarioStep = z.infer<typeof ScenarioStepSchema>;
 
 export const ScenarioSchema = z.object({
   description: z.string().optional(),
+  story: z
+    .object({
+      title: z.string().min(1).optional(),
+      persona: z.string().min(1).optional(),
+      goal: z.string().min(1).optional(),
+    })
+    .optional(),
   steps: z.array(ScenarioStepSchema).min(1),
 });
 
@@ -205,7 +240,7 @@ export const AutoDemoConfigSchema = z.object({
   browser: z
     .object({
       headless: z.boolean().default(false),
-      viewport: ViewportSchema.default({ width: 1440, height: 900 }),
+      viewport: ViewportSchema.default({ width: 1600, height: 900 }),
       recordVideo: z.boolean().default(false),
       cursor: CursorSchema.default({}),
       transitions: TransitionsSchema.default({}),
@@ -235,5 +270,3 @@ export const AutoDemoConfigSchema = z.object({
 });
 
 export type AutoDemoConfig = z.infer<typeof AutoDemoConfigSchema>;
-
-

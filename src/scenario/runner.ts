@@ -171,7 +171,9 @@ export async function runScenario(opts: RunScenarioOpts): Promise<RunScenarioRes
       : undefined;
 
   const headless = opts.headless ?? opts.config.browser.headless;
-  const storageStatePath = opts.config.auth.statePath ? resolveCwdPath(opts.config.auth.statePath) : undefined;
+  const storageStatePath = opts.config.auth.statePath
+    ? resolveCwdPath(opts.config.auth.statePath)
+    : undefined;
 
   const stagehandSession = needsStagehand
     ? await createStagehandSession({
@@ -251,7 +253,11 @@ export async function runScenario(opts: RunScenarioOpts): Promise<RunScenarioRes
     try {
       if (step.type === "act") {
         if (!stagehandSession) throw new Error("Stagehand session not initialized");
-        await executeStagehandStep({ stagehand: stagehandSession.stagehand, page: session.page, step });
+        await executeStagehandStep({
+          stagehand: stagehandSession.stagehand,
+          page: session.page,
+          step,
+        });
       } else {
         await executePlaywrightStep({ page: session.page, baseUrl: opts.baseUrl, step });
       }
@@ -281,13 +287,14 @@ export async function runScenario(opts: RunScenarioOpts): Promise<RunScenarioRes
         step.type === "select" ||
         step.type === "waitForSelector" ||
         step.type === "expectVisible" ||
-        step.type === "expectText"
+        step.type === "expectText" ||
+        step.type === "scrollIntoView"
           ? step.selector
           : step.type === "press"
             ? step.selector
-          : step.type === "screenshot"
-            ? step.selector
-            : undefined;
+            : step.type === "screenshot"
+              ? step.selector
+              : undefined;
 
       if (transitionMs > 0) {
         await session.page.waitForTimeout(transitionMs);
@@ -396,7 +403,9 @@ export async function runScenario(opts: RunScenarioOpts): Promise<RunScenarioRes
     }
   }
 
-  const { videoWebmPath } = await closePlaywrightSession(session).catch(() => ({ videoWebmPath: undefined }));
+  const { videoWebmPath } = await closePlaywrightSession(session).catch(() => ({
+    videoWebmPath: undefined,
+  }));
 
   if (stagehandSession) {
     await closeStagehandSession(stagehandSession).catch(() => {});
@@ -410,7 +419,14 @@ export async function runScenario(opts: RunScenarioOpts): Promise<RunScenarioRes
 
       if (await isFfmpegAvailable()) {
         const mp4Abs = path.join(outDir, "video.mp4");
-        await convertWebmToMp4({ inputWebm: webmAbs, outputMp4: mp4Abs, logPath });
+        await convertWebmToMp4({
+          inputWebm: webmAbs,
+          outputMp4: mp4Abs,
+          logPath,
+          width: opts.config.browser.viewport.width,
+          height: opts.config.browser.viewport.height,
+          fps: 30,
+        });
         videoMp4PathRel = "video.mp4";
       }
     } catch {
@@ -456,5 +472,3 @@ export async function runScenario(opts: RunScenarioOpts): Promise<RunScenarioRes
     failureMessage,
   };
 }
-
-

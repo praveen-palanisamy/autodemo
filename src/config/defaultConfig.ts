@@ -15,7 +15,7 @@ export function defaultConfig(): Record<string, unknown> {
     },
     browser: {
       headless: false,
-      viewport: { width: 1440, height: 900 },
+      viewport: { width: 1600, height: 900 },
       recordVideo: false,
       cursor: {
         showCursor: true,
@@ -23,7 +23,7 @@ export function defaultConfig(): Record<string, unknown> {
         pointerColor: "#0076FF",
         clickColor: "#0076FF",
         highlightClicks: true,
-        clickRadius: 24,
+        clickRadius: 36,
       },
       transitions: {
         transitionMs: 800,
@@ -41,5 +41,3 @@ export function defaultConfig(): Record<string, unknown> {
     scenarios: {},
   };
 }
-
-

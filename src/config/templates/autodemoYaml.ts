@@ -26,7 +26,8 @@ output:
 browser:
   # Default headed so you can see the demo; pass --headless for CI.
   headless: false
-  viewport: { width: 1440, height: 900 }
+  # Prefer 16:9 for demo videos that embed cleanly in marketing pages.
+  viewport: { width: 1600, height: 900 }
   # recordVideo:
   # - when true, AutoDemo will attempt to write video.mp4 (requires ffmpeg).
   # - note: some engines/connection modes may fall back to screenshots-only.
@@ -43,7 +44,7 @@ browser:
     # Show a click highlight ring
     highlightClicks: true
     # Ring size in px
-    clickRadius: 24
+    clickRadius: 36
   transitions:
     # Delay after each step so the UI/cursor is visible in captures.
     transitionMs: 800
@@ -82,5 +83,3 @@ recording:
   scrollThrottleMs: 300
 `;
 }
-
-
