@@ -4,6 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>AutoDemo — Docs</title>
+    <meta name="description" content="AutoDemo documentation: CLI, configuration, GitHub Action, MCP for agents, architecture, and testing." />
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
@@ -17,27 +18,61 @@
       </div>
       <nav class="nav">
         <a href="./index.html">Home</a>
-        <a href="./demos/signup/latest/index.html">Demo</a>
+        <a href="./demos/site-landing/latest/index.html">Live demo</a>
+        <a href="https://github.com/praveen-palanisamy/autodemo">GitHub</a>
       </nav>
     </header>
 
     <main class="wrap">
       <section class="section">
-        <h2>Docs</h2>
-        <ul class="bullets">
-          <li><a href="./docs/CLI.md">CLI</a></li>
-          <li><a href="./docs/CONFIG.md">Config</a></li>
-          <li><a href="./docs/ARCHITECTURE.md">Architecture</a></li>
-          <li><a href="./docs/MCP.md">MCP</a></li>
-          <li><a href="./docs/TESTING.md">Testing</a></li>
-        </ul>
-        <p class="muted">
-          Note: GitHub Pages is static hosting; Markdown rendering depends on the viewer.
-          For “pretty” docs pages, we can add a docs renderer later (kept out of v0.1 on purpose).
+        <h2>Documentation</h2>
+        <div class="cards three">
+          <div class="card">
+            <div class="cardTitle"><a href="./docs/CLI.md">CLI reference</a></div>
+            <div class="cardBody"><code>demo</code>, <code>init</code>, <code>record</code>, <code>run</code>, <code>doctor</code>, <code>mcp</code> — flags, exit codes, JSON mode.</div>
+          </div>
+          <div class="card">
+            <div class="cardTitle"><a href="./docs/CONFIG.md">Configuration</a></div>
+            <div class="cardBody"><code>.autodemo.yml</code> schema: scenarios, step types, LLM providers, cursor, video, auth state.</div>
+          </div>
+          <div class="card">
+            <div class="cardTitle"><a href="./docs/GITHUB_ACTION.md">GitHub Action</a></div>
+            <div class="cardBody">Regenerate demos in CI on every merge, in five lines of YAML.</div>
+          </div>
+          <div class="card">
+            <div class="cardTitle"><a href="./docs/AGENTS.md">AI agents (MCP)</a></div>
+            <div class="cardBody">Let Cursor, Claude Code, and Codex generate and run demos via the MCP server.</div>
+          </div>
+          <div class="card">
+            <div class="cardTitle"><a href="./docs/MCP.md">MCP tool reference</a></div>
+            <div class="cardBody">Tool payloads and artifact contracts for agent integrations.</div>
+          </div>
+          <div class="card">
+            <div class="cardTitle"><a href="./docs/RECIPES.md">Recipes</a></div>
+            <div class="cardBody">Community scenario recipes: auth flows, frameworks, marketing captures.</div>
+          </div>
+          <div class="card">
+            <div class="cardTitle"><a href="./docs/ARCHITECTURE.md">Architecture</a></div>
+            <div class="cardBody">Engines, runner, artifact pipeline — how it fits together.</div>
+          </div>
+          <div class="card">
+            <div class="cardTitle"><a href="./docs/TESTING.md">Testing</a></div>
+            <div class="cardBody">Unit + integration testing strategy (and how to run it locally).</div>
+          </div>
+          <div class="card">
+            <div class="cardTitle"><a href="https://github.com/praveen-palanisamy/autodemo/blob/main/CONTRIBUTING.md">Contributing</a></div>
+            <div class="cardBody">15-minute setup, project tour, and what to work on first.</div>
+          </div>
+        </div>
+        <p class="muted small" style="margin-top: 14px">
+          Docs are served as raw Markdown on this static site; they render nicely on
+          <a href="https://github.com/praveen-palanisamy/autodemo/tree/main/docs">GitHub</a>.
         </p>
       </section>
     </main>
+
+    <footer class="wrap footer">
+      <div><strong>AutoDemo</strong> — demos as code · MIT licensed</div>
+    </footer>
   </body>
 </html>
-
-

@@ -97,6 +97,115 @@ code {
   padding: 36px 0 12px;
 }
 
+.pill {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  background: var(--panel);
+  border-radius: 999px;
+  padding: 5px 12px;
+  margin-bottom: 16px;
+}
+
+.install {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 14px;
+  padding: 12px 14px;
+  margin: 18px 0 6px;
+  overflow: auto;
+}
+
+.install code {
+  font-size: 13.5px;
+  white-space: nowrap;
+}
+
+.copy {
+  flex: none;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  background: linear-gradient(135deg, rgba(102, 163, 255, 0.25), rgba(124, 92, 255, 0.2));
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+.copy:hover {
+  filter: brightness(1.15);
+}
+
+.small {
+  font-size: 13px;
+}
+
+.demoVideo {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: #000;
+  display: block;
+}
+
+.cardKicker {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--brand);
+  margin-bottom: 6px;
+}
+
+.cards.three {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.compare {
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+}
+
+.compare table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.compare th,
+.compare td {
+  text-align: left;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.compare thead th {
+  background: var(--panel);
+  font-weight: 700;
+}
+
+.compare tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.compare td:nth-child(2) {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.compare td:not(:first-child) {
+  color: var(--muted);
+}
+
 h1 {
   margin: 0 0 12px;
   font-size: 44px;
@@ -197,7 +306,8 @@ h2 {
   h1 {
     font-size: 36px;
   }
-  .cards {
+  .cards,
+  .cards.three {
     grid-template-columns: 1fr;
   }
 }

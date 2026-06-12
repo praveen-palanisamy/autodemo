@@ -1,5 +1,5 @@
 project:
-  name: AutoDemo Site
+  name: AutoDemo
   # baseUrl is supplied by CI/local scripts via --url so this stays portable.
 
 output:
@@ -9,6 +9,7 @@ output:
 browser:
   headless: true
   recordVideo: true
+  viewport: { width: 1600, height: 900 }
   cursor:
     showCursor: true
     style: arrow
@@ -18,26 +19,56 @@ browser:
     clickRadius: 24
   transitions:
     transitionMs: 700
-    endPauseMs: 1000
+    endPauseMs: 1200
 
 scenarios:
   site-landing:
-    description: "AutoDemo site: open the interactive demo and step through it"
+    description: "AutoDemo product page: tour the landing page and open a generated walkthrough"
     steps:
       - type: goto
         url: /
-        note: "Open AutoDemo landing page"
-      - type: click
-        selector: "[data-testid=cta-open-demo]"
-        note: "Open interactive demo"
+        note: "Open the AutoDemo product page"
+      - type: scrollIntoView
+        selector: "[data-testid=section-how]"
+        behavior: smooth
+        note: "How it works: describe → run → ship"
+      - type: scrollIntoView
+        selector: "[data-testid=section-features]"
+        behavior: smooth
+        note: "Built for humans and AI agents"
+      - type: scrollIntoView
+        selector: "[data-testid=section-code]"
+        behavior: smooth
+        note: "Scenarios are code, versioned in git"
+      - type: scrollIntoView
+        selector: "[data-testid=section-start]"
+        behavior: smooth
+        note: "Get started in 60 seconds"
+      - type: scrollTo
+        y: 0
+        behavior: smooth
+        note: "Back to the top"
+      - type: sleep
+        ms: 600
+        note: "Pause for the video tail"
+
+  # Runs in a second pass (after site-landing artifacts are embedded in the site),
+  # so the walkthrough it opens is the one generated moments earlier. Dogfooding.
+  site-walkthrough:
+    description: "Step through an interactive walkthrough that AutoDemo generated"
+    steps:
+      - type: goto
+        url: /demos/site-landing/latest/index.html
+        note: "Open the generated interactive walkthrough"
       - type: waitForSelector
         selector: "#next"
-        note: "Wait for demo UI to load"
+        note: "Walkthrough loads (static HTML + run.json)"
       - type: click
         selector: "#next"
-        note: "Advance one step"
+        note: "Advance a step"
+      - type: click
+        selector: "#next"
+        note: "Advance another step"
       - type: sleep
-        ms: 500
-        note: "Pause for the video"
-
-
+        ms: 600
+        note: "Pause for the video tail"

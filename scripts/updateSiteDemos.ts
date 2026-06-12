@@ -46,37 +46,46 @@ async function main(): Promise<void> {
   const port = Number(popOption(argv, "--port") ?? process.env.PORT ?? "4173");
   const baseUrl = `http://127.0.0.1:${port}`;
 
-  // Build site first (ensures site/src exists and site/dist is clean).
-  await run("bun", ["run", "site:build"]);
+  const cfg = path.join("configs", "site-demo.autodemo.yaml");
 
-  // Serve site/dist and run a deterministic demo scenario against it.
-  const serveArgs = ["run", "scripts/siteServe.ts", "--", "--port", String(port)];
-  const server = spawn("bun", serveArgs, { stdio: "inherit" });
-  try {
-    await waitForOk(`${baseUrl}/`, 20_000);
-    const cfg = path.join("configs", "site-demo.autodemo.yaml");
-    await run("bun", [
-      "run",
-      "./bin/autodemo.ts",
-      "run",
-      "site-landing",
-      "--config",
-      cfg,
-      "--url",
-      baseUrl,
-      "--headless",
-      "--no-tui",
-      "--debug",
-    ]);
-  } finally {
+  const runScenario = async (scenario: string): Promise<void> => {
+    const server = spawn("bun", ["run", "scripts/siteServe.ts", "--", "--port", String(port)], {
+      stdio: "inherit",
+    });
     try {
-      server.kill("SIGTERM");
-    } catch {
-      // ignore
+      await waitForOk(`${baseUrl}/`, 20_000);
+      await run("bun", [
+        "run",
+        "./bin/autodemo.ts",
+        "run",
+        scenario,
+        "--config",
+        cfg,
+        "--url",
+        baseUrl,
+        "--headless",
+        "--no-tui",
+        "--debug",
+      ]);
+    } finally {
+      try {
+        server.kill("SIGTERM");
+      } catch {
+        // ignore
+      }
     }
-  }
+  };
 
-  // Rebuild site so GitHub Pages picks up any updated demo artifacts.
+  // Pass 1: tour the landing page (works even with no pre-existing demo artifacts).
+  await run("bun", ["run", "site:build"]);
+  await runScenario("site-landing");
+
+  // Pass 2: rebuild so the freshly generated walkthrough is embedded in the site,
+  // then record AutoDemo stepping through its own generated walkthrough.
+  await run("bun", ["run", "site:build"]);
+  await runScenario("site-walkthrough");
+
+  // Final rebuild so GitHub Pages picks up every updated demo artifact.
   await run("bun", ["run", "site:build"]);
 }
 

@@ -3,11 +3,19 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>AutoDemo — Stagehand-first demo automation</title>
+    <title>AutoDemo — Demos as code. Videos, walkthroughs & marketing assets from your running app.</title>
     <meta
       name="description"
-      content="AutoDemo turns a running web app into shareable interactive walkthroughs and videos. Stagehand-first, Bun-first, agent-ready via MCP."
+      content="Open-source CLI that turns a running web app into demo videos, interactive walkthroughs, and marketing captures. AI-authored or deterministic, CI-native, agent-ready via MCP. Free forever."
     />
+    <meta property="og:title" content="AutoDemo — Demos as code" />
+    <meta
+      property="og:description"
+      content="Generate demo videos, interactive walkthroughs, and marketing assets from your running web app. One command. Free & open source."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="./demos/site-landing/latest/steps/0001.png" />
+    <meta name="twitter:card" content="summary_large_image" />
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
@@ -16,70 +24,235 @@
         <div class="logo" aria-hidden="true">AD</div>
         <div>
           <div class="title">AutoDemo</div>
-          <div class="subtitle">Stagehand-first demo automation</div>
+          <div class="subtitle">Demos as code</div>
         </div>
       </div>
       <nav class="nav">
         <a data-testid="nav-docs" href="./docs.html">Docs</a>
-        <a data-testid="nav-demo" href="./demos/signup/latest/index.html">Demo</a>
-        <a data-testid="nav-github" href="#" onclick="return false;">GitHub</a>
+        <a data-testid="nav-demo" href="./demos/site-landing/latest/index.html">Live demo</a>
+        <a data-testid="nav-github" href="https://github.com/praveen-palanisamy/autodemo">GitHub</a>
       </nav>
     </header>
 
     <main class="wrap">
       <section class="hero">
-        <h1>Keep demos in sync with your product.</h1>
+        <div class="pill">Open source · MIT · No telemetry</div>
+        <h1>Your product changed.<br />Your demo already knows.</h1>
         <p class="lead">
-          AutoDemo generates <strong>interactive walkthroughs</strong> and <strong>videos</strong> from a
-          running web app. It’s designed for builders, teams, and tool-use agents.
+          AutoDemo turns a running web app into <strong>demo videos</strong>,
+          <strong>interactive walkthroughs</strong>, and <strong>marketing captures</strong> — from one
+          command. Author scenarios in plain English with any LLM, or deterministically in YAML.
+          Re-generate everything in CI on every merge.
         </p>
+
+        <div class="install" data-testid="install-line">
+          <code id="install-cmd">curl -fsSL https://raw.githubusercontent.com/praveen-palanisamy/autodemo/main/install.sh | bash</code>
+          <button id="copy-install" class="copy" aria-label="Copy install command">Copy</button>
+        </div>
+        <p class="muted small">or zero-install: <code>bunx autodemo demo "Sign up and open the dashboard" --url http://localhost:3000</code></p>
+
         <div class="cta">
-          <a data-testid="cta-open-demo" class="button" href="./demos/signup/latest/index.html">Open interactive demo</a>
-          <a class="button secondary" href="./demos/signup/latest/video.mp4">Watch video</a>
-        </div>
-        <div class="cards">
-          <div class="card">
-            <div class="cardTitle">Stagehand-first</div>
-            <div class="cardBody">Use LLM-native <code>act</code> steps, with Playwright fallbacks for precision.</div>
-          </div>
-          <div class="card">
-            <div class="cardTitle">Bun-first CLI</div>
-            <div class="cardBody">Fast iteration, Ink TUI for humans, and deterministic modes for CI.</div>
-          </div>
-          <div class="card">
-            <div class="cardTitle">Agent-ready</div>
-            <div class="cardBody">MCP server over stdio so tools/agents can list/generate/run demos.</div>
-          </div>
+          <a data-testid="cta-open-demo" class="button" href="./demos/site-landing/latest/index.html">Open a real walkthrough</a>
+          <a data-testid="cta-github" class="button secondary" href="https://github.com/praveen-palanisamy/autodemo">Star on GitHub</a>
         </div>
       </section>
 
-      <section class="section">
-        <h2>Outputs</h2>
-        <ul class="bullets">
-          <li><code>index.html</code> (interactive walkthrough)</li>
-          <li><code>run.json</code> (timings + step metadata)</li>
-          <li><code>steps/*.png</code> (one screenshot per step)</li>
-          <li><code>video.mp4</code> (optional) with cursor + click rings</li>
-        </ul>
-      </section>
-
-      <section class="section">
-        <h2>Try it</h2>
-        <pre class="code"><code>bunx autodemo init
-bunx autodemo run signup --url http://localhost:3000
-bunx autodemo run --interactive
-bunx autodemo mcp --no-tui</code></pre>
-        <p class="muted">
-          Tip: add stable selectors like <code>data-testid</code> for the best recordings.
+      <section class="section" id="video" data-testid="section-video">
+        <h2>Watch it work — this video was generated by AutoDemo, in CI, about this site</h2>
+        <video
+          id="demo-video"
+          class="demoVideo"
+          controls
+          muted
+          playsinline
+          preload="metadata"
+          poster="./demos/site-landing/latest/steps/0001.png"
+          src="./demos/site-landing/latest/video.mp4"
+        ></video>
+        <p class="muted small">
+          Every deploy of this page re-records its own demo. That is the whole point:
+          demos that can never go stale.
         </p>
+      </section>
+
+      <section class="section" data-testid="section-how">
+        <h2>How it works</h2>
+        <div class="cards three">
+          <div class="card">
+            <div class="cardKicker">1 · Describe</div>
+            <div class="cardTitle">Plain English or YAML</div>
+            <div class="cardBody">
+              <code>autodemo demo "Sign up, create a project, open the dashboard"</code> — or commit a
+              deterministic <code>.autodemo.yml</code> scenario next to your code.
+            </div>
+          </div>
+          <div class="card">
+            <div class="cardKicker">2 · Run</div>
+            <div class="cardTitle">Real browser, real app</div>
+            <div class="cardBody">
+              Playwright drives your actual product — local dev, preview deploy, or production — with a
+              visible cursor, click rings, human-paced typing, and auth state support.
+            </div>
+          </div>
+          <div class="card">
+            <div class="cardKicker">3 · Ship</div>
+            <div class="cardTitle">Every artifact, one run</div>
+            <div class="cardBody">
+              <code>video.mp4</code> · interactive <code>index.html</code> walkthrough ·
+              named <code>assets/*.png</code> marketing captures · reproducible <code>run.json</code>.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" data-testid="section-features">
+        <h2>Built for humans <em>and</em> AI agents</h2>
+        <div class="cards three">
+          <div class="card">
+            <div class="cardTitle">Bring any LLM</div>
+            <div class="cardBody">
+              Claude, OpenAI, Gemini, Groq, or fully local via Ollama/vLLM. Auto-detected from your env —
+              and optional: deterministic scenarios need no LLM at all.
+            </div>
+          </div>
+          <div class="card">
+            <div class="cardTitle">CI-native</div>
+            <div class="cardBody">
+              A 5-line GitHub Action regenerates demos on every merge. A failing demo run is a failing
+              user flow — your demo doubles as a smoke test.
+            </div>
+          </div>
+          <div class="card">
+            <div class="cardTitle">MCP for agents</div>
+            <div class="cardBody">
+              <code>autodemo mcp</code> lets Cursor, Claude Code, and Codex agents generate and run demos
+              to <em>show their work</em> — videos on every PR.
+            </div>
+          </div>
+          <div class="card">
+            <div class="cardTitle">Versioned with your code</div>
+            <div class="cardBody">
+              Scenarios live in git, get code-reviewed, and diff like code. No browser extensions, no
+              vendor cloud, no per-seat pricing. Ever.
+            </div>
+          </div>
+          <div class="card">
+            <div class="cardTitle">Authenticated flows</div>
+            <div class="cardBody">
+              Reusable browser storage state means logged-in demos run against emulators, previews, or
+              production without manual logins.
+            </div>
+          </div>
+          <div class="card">
+            <div class="cardTitle">Marketing-grade output</div>
+            <div class="cardBody">
+              Dev overlays hidden, loading noise trimmed, named region captures for your homepage and
+              launch posts — straight from the real UI.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" data-testid="section-code">
+        <h2>Demos as code</h2>
+        <pre class="code"><code># .autodemo.yml — committed next to your app
+scenarios:
+  signup:
+    description: "Signup → first project"
+    steps:
+      - type: goto
+        url: /signup
+      - type: act                      # AI step (any LLM)
+        instruction: "Sign up with a new email and password"
+      - type: click                    # deterministic step
+        selector: "[data-testid=new-project]"
+      - type: waitFor
+        text: "Dashboard"
+      - type: screenshot               # named marketing capture
+        name: dashboard-hero
+        selector: "[data-testid=dashboard]"</code></pre>
+        <pre class="code"><code># Run locally
+autodemo run signup --url http://localhost:3000
+
+# Or in CI (.github/workflows/demos.yml)
+- uses: praveen-palanisamy/autodemo@v0
+  with:
+    url: http://localhost:3000</code></pre>
+      </section>
+
+      <section class="section" data-testid="section-compare">
+        <h2>Why not a demo SaaS or a screen recorder?</h2>
+        <div class="compare">
+          <table>
+            <thead>
+              <tr>
+                <th></th>
+                <th>AutoDemo</th>
+                <th>Demo SaaS</th>
+                <th>Screen recorder</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Price</td><td>Free, OSS</td><td>$300–500/mo for HTML capture, per-seat</td><td>$10–30/mo</td></tr>
+              <tr><td>Stays current after UI changes</td><td>Re-runs in CI automatically</td><td>Manual re-capture</td><td>Manual re-record</td></tr>
+              <tr><td>Video + walkthrough + stills</td><td>One run, all three</td><td>Usually one format</td><td>Video only</td></tr>
+              <tr><td>Versioned in git / code review</td><td>Yes</td><td>No</td><td>No</td></tr>
+              <tr><td>Usable by AI agents</td><td>MCP + JSON CLI</td><td>No</td><td>No</td></tr>
+              <tr><td>Your data stays yours</td><td>Runs on your machine/CI</td><td>Vendor cloud</td><td>Local</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="muted small">
+          Need hosted analytics, branching demos, and a no-code editor? The SaaS tools are great at that —
+          AutoDemo is for teams who want demos to be build artifacts.
+        </p>
+      </section>
+
+      <section class="section" data-testid="section-start">
+        <h2>Get started in 60 seconds</h2>
+        <pre class="code"><code># 1. Install (macOS / Linux / WSL)
+curl -fsSL https://raw.githubusercontent.com/praveen-palanisamy/autodemo/main/install.sh | bash
+
+# 2. Point it at any running web app
+autodemo demo "Show the signup flow" --url http://localhost:3000
+
+# 3. Open the artifacts
+#    .autodemo-out/demo/latest/video.mp4
+#    .autodemo-out/demo/latest/index.html</code></pre>
+        <div class="cta">
+          <a class="button" href="https://github.com/praveen-palanisamy/autodemo#quick-start">Read the quick start</a>
+          <a class="button secondary" href="./docs.html">Browse the docs</a>
+        </div>
       </section>
     </main>
 
     <footer class="wrap footer">
-      <div>AutoDemo — OSS demo automation</div>
-      <div class="muted">Built with Bun, Stagehand, Playwright, Ink, and MCP.</div>
+      <div>
+        <strong>AutoDemo</strong> — demos as code · MIT licensed ·
+        <a href="https://github.com/praveen-palanisamy/autodemo">GitHub</a> ·
+        <a href="https://github.com/praveen-palanisamy/autodemo/discussions">Community</a>
+      </div>
+      <div class="muted small">
+        This page, its demo video, and its walkthrough are regenerated by AutoDemo itself on every deploy.
+      </div>
     </footer>
+
+    <script>
+      // Copy-to-clipboard for the install one-liner.
+      document.getElementById("copy-install").addEventListener("click", async () => {
+        const cmd = document.getElementById("install-cmd").textContent;
+        try {
+          await navigator.clipboard.writeText(cmd);
+          const btn = document.getElementById("copy-install");
+          btn.textContent = "Copied!";
+          setTimeout(() => (btn.textContent = "Copy"), 1500);
+        } catch {}
+      });
+      // Hide the video section gracefully if artifacts aren't generated yet (local preview).
+      const video = document.getElementById("demo-video");
+      video.addEventListener("error", () => {
+        document.getElementById("video").style.display = "none";
+      }, true);
+    </script>
   </body>
 </html>
-
-

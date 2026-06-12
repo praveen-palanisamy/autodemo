@@ -49,6 +49,12 @@ if (await pathExists(demosSrc)) {
   await copyDir(demosSrc, demosDest);
 }
 
+// Serve the installer from the site too (short URL: <pages>/install.sh).
+const installSrc = path.join(root, "install.sh");
+if (await pathExists(installSrc)) {
+  await cp(installSrc, path.join(distDir, "install.sh"));
+}
+
 console.log(`Built site: ${distDir}`);
 }
 
