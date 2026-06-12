@@ -1,0 +1,110 @@
+name: "AutoDemo"
+description: >-
+  Generate demo videos, interactive walkthroughs, and marketing captures from a
+  running web app. Demos as code: deterministic YAML scenarios or AI instructions.
+author: "Praveen Palanisamy"
+branding:
+  icon: "film"
+  color: "blue"
+
+inputs:
+  url:
+    description: "Base URL of the running app to capture (e.g. http://localhost:3000)"
+    required: true
+  scenario:
+    description: "Scenario name to run. Use 'all' to run every scenario in the config."
+    required: false
+    default: "all"
+  config:
+    description: "Path to the AutoDemo config file"
+    required: false
+    default: ".autodemo.yml"
+  instruction:
+    description: >-
+      Optional natural-language instruction. When set, runs a one-shot AI demo
+      instead of config scenarios (requires an LLM API key in env).
+    required: false
+    default: ""
+  upload-artifacts:
+    description: "Upload generated demo artifacts as a workflow artifact"
+    required: false
+    default: "true"
+  artifact-name:
+    description: "Name for the uploaded artifact"
+    required: false
+    default: "autodemo-artifacts"
+  output-dir:
+    description: "Override output directory (defaults to the config's output.dir)"
+    required: false
+    default: ""
+
+outputs:
+  output-dir:
+    description: "Directory containing the generated demo artifacts"
+    value: ${{ steps.run.outputs.output-dir }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@v2
+      with:
+        bun-version: latest
+
+    - name: Install AutoDemo (from this action's ref)
+      shell: bash
+      run: |
+        cd "${GITHUB_ACTION_PATH}"
+        bun install --frozen-lockfile --production
+
+    - name: Install Playwright Chromium
+      shell: bash
+      run: |
+        cd "${GITHUB_ACTION_PATH}"
+        bunx playwright install --with-deps chromium
+
+    - name: Install ffmpeg
+      shell: bash
+      run: |
+        if ! command -v ffmpeg >/dev/null 2>&1; then
+          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+        fi
+
+    - name: Run AutoDemo
+      id: run
+      shell: bash
+      run: |
+        set -euo pipefail
+        AUTODEMO="bun run ${GITHUB_ACTION_PATH}/bin/autodemo.ts"
+        OUT_FLAG=""
+        if [ -n "${{ inputs.output-dir }}" ]; then
+          OUT_FLAG="--outDir ${{ inputs.output-dir }}"
+        fi
+        if [ -n "${{ inputs.instruction }}" ]; then
+          $AUTODEMO demo "${{ inputs.instruction }}" \
+            --url "${{ inputs.url }}" --headless --no-tui $OUT_FLAG
+        elif [ "${{ inputs.scenario }}" = "all" ]; then
+          $AUTODEMO run --all \
+            --config "${{ inputs.config }}" --url "${{ inputs.url }}" --headless --no-tui $OUT_FLAG
+        else
+          $AUTODEMO run "${{ inputs.scenario }}" \
+            --config "${{ inputs.config }}" --url "${{ inputs.url }}" --headless --no-tui $OUT_FLAG
+        fi
+
+        # Resolve the artifacts directory for the output/upload steps.
+        if [ -n "${{ inputs.output-dir }}" ]; then
+          echo "output-dir=${{ inputs.output-dir }}" >> "$GITHUB_OUTPUT"
+        elif [ -n "${{ inputs.instruction }}" ] && [ ! -f "${{ inputs.config }}" ]; then
+          echo "output-dir=.autodemo-out" >> "$GITHUB_OUTPUT"
+        else
+          DIR=$(grep -E '^\s*dir:' "${{ inputs.config }}" | head -1 | sed 's/.*dir:\s*//' | tr -d '"' || true)
+          echo "output-dir=${DIR:-public/demos}" >> "$GITHUB_OUTPUT"
+        fi
+
+    - name: Upload artifacts
+      if: ${{ inputs.upload-artifacts == 'true' }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.artifact-name }}
+        path: ${{ steps.run.outputs.output-dir }}
+        if-no-files-found: warn

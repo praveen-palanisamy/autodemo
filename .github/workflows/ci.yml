@@ -28,6 +28,9 @@ jobs:
       - name: Unit tests
         run: bun run test:unit
 
+      - name: Installer script check
+        run: bash -n install.sh
+
   integration:
     runs-on: ubuntu-latest
     steps:
@@ -46,4 +49,43 @@ jobs:
       - name: Integration tests
         run: bun run test:integration
 
+      - name: Upload failure artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-failure-artifacts
+          path: |
+            .autodemo-out/
+            public/demos/
+          if-no-files-found: ignore
 
+  # Dogfood: run the published composite action against our own product site.
+  # This is the same path users take with `uses: praveen-palanisamy/autodemo@v0`.
+  action-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install + build site
+        run: |
+          bun install --frozen-lockfile
+          bun run site:build
+
+      - name: Serve site in background
+        run: |
+          nohup bun run scripts/siteServe.ts --port 4173 >/tmp/site.log 2>&1 &
+          for i in $(seq 1 50); do
+            curl -fsS http://127.0.0.1:4173/ >/dev/null && break
+            sleep 0.2
+          done
+
+      - name: Run AutoDemo via the composite action
+        uses: ./
+        with:
+          url: http://127.0.0.1:4173
+          config: configs/site-demo.autodemo.yaml
+          artifact-name: action-smoke-demos

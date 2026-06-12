@@ -1,7 +1,13 @@
 name: update-demos
 
+# Refreshes the demo artifacts that are committed to the repo (used by the
+# README teaser). The product site does NOT depend on this — pages.yml
+# regenerates site demos on every deploy. Runs weekly and on demand.
+
 on:
   workflow_dispatch: {}
+  schedule:
+    - cron: "17 6 * * 1" # Mondays 06:17 UTC
 
 permissions:
   contents: write
@@ -19,11 +25,11 @@ jobs:
       - name: Install
         run: bun install --frozen-lockfile
 
-      - name: Install Playwright browsers
-        run: bun run playwright:install
+      - name: Install Playwright Chromium
+        run: bunx playwright install --with-deps chromium
 
       - name: Install ffmpeg
-        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
 
       - name: Generate demo artifacts (site + videos)
         run: bun run demos:update
@@ -34,7 +40,5 @@ jobs:
           git config user.email "autodemo-bot@users.noreply.github.com"
           git add -f public/demos
           git status --porcelain=v1
-          git commit -m "chore(demos): update generated walkthrough artifacts" || exit 0
+          git commit -m "chore(demos): refresh generated walkthrough artifacts" || exit 0
           git push
-
-

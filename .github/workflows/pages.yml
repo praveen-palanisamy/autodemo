@@ -1,5 +1,10 @@
 name: pages
 
+# Product site: built and deployed on every push to main.
+# AutoDemo dogfoods itself during the build — it records fresh demo videos and
+# interactive walkthroughs of its own product site, then publishes them as part
+# of the site. No artifacts are committed; GitHub Pages hosts everything free.
+
 on:
   push:
     branches: [main]
@@ -30,7 +35,16 @@ jobs:
       - name: Install
         run: bun install --frozen-lockfile
 
-      - name: Build site
+      - name: Install Playwright Chromium
+        run: bunx playwright install --with-deps chromium
+
+      - name: Install ffmpeg
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+
+      - name: Generate fresh demo artifacts with AutoDemo (dogfood)
+        run: bun run demos:update
+
+      - name: Build site (includes generated demos)
         run: bun run site:build
 
       - uses: actions/configure-pages@v5
@@ -41,5 +55,3 @@ jobs:
 
       - id: deployment
         uses: actions/deploy-pages@v4
-
-
