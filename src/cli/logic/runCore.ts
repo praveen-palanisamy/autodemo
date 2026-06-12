@@ -24,6 +24,7 @@ export async function runCore(parsed: ParsedCli): Promise<RunCoreResult> {
   const outDirOverride = popOption(argv, "--outDir");
   const forceHeadless = popFlag(argv, "--headless");
   const debug = popFlag(argv, "--debug");
+  const noBranding = popFlag(argv, "--no-branding");
 
   let scenarioName = all ? undefined : argv[0];
   if (scenarioName === "scenario") scenarioName = argv[1];
@@ -31,7 +32,10 @@ export async function runCore(parsed: ParsedCli): Promise<RunCoreResult> {
     throw new Error("Missing scenario name (or pass --all)");
   }
 
-  const { config } = await loadConfig({ cwd: parsed.global.cwd, configPath: parsed.global.configPath });
+  let { config } = await loadConfig({ cwd: parsed.global.cwd, configPath: parsed.global.configPath });
+  if (noBranding) {
+    config = { ...config, output: { ...config.output, branding: false } };
+  }
 
   const baseUrl = urlOverride ?? config.project.baseUrl;
   if (!baseUrl) {

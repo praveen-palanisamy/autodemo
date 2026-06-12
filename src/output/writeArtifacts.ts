@@ -6,10 +6,13 @@ import { ensureDir } from "../utils/fs.ts";
 import { stepsDir } from "./paths.ts";
 import { generateInteractiveHtml } from "./interactive/generateInteractiveHtml.ts";
 
-export async function writeInteractiveHtml(outDir: string): Promise<string> {
+export async function writeInteractiveHtml(
+  outDir: string,
+  opts?: { branding?: boolean },
+): Promise<string> {
   await ensureDir(outDir);
   const htmlPath = path.join(outDir, "index.html");
-  await writeFile(htmlPath, generateInteractiveHtml(), "utf8");
+  await writeFile(htmlPath, generateInteractiveHtml({ branding: opts?.branding ?? true }), "utf8");
   return htmlPath;
 }
 

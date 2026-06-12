@@ -13,6 +13,7 @@ export type CreateStagehandSessionOpts = {
   modelName?: string;
   llmProvider?: string;
   llmApiKey?: string;
+  llmBaseUrl?: string;
 };
 
 export async function createStagehandSession(opts: CreateStagehandSessionOpts): Promise<StagehandSession> {
@@ -20,11 +21,12 @@ export async function createStagehandSession(opts: CreateStagehandSessionOpts): 
   const { Stagehand: StagehandCtor } = await import("@browserbasehq/stagehand");
 
   const model: ModelConfiguration | undefined = opts.modelName
-    ? opts.llmApiKey
+    ? opts.llmApiKey || opts.llmBaseUrl
       ? ({
           modelName: opts.modelName,
-          apiKey: opts.llmApiKey,
-          provider: opts.llmProvider,
+          ...(opts.llmApiKey ? { apiKey: opts.llmApiKey } : {}),
+          ...(opts.llmProvider ? { provider: opts.llmProvider } : {}),
+          ...(opts.llmBaseUrl ? { baseURL: opts.llmBaseUrl } : {}),
         } as unknown as ModelConfiguration)
       : (opts.modelName as ModelConfiguration)
     : undefined;

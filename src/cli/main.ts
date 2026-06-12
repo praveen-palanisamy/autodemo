@@ -1,5 +1,6 @@
 import { runInit } from "./commands/init.ts";
 import { runRun } from "./commands/run.ts";
+import { runDemo } from "./commands/demo.ts";
 import { runRecord } from "./commands/record.ts";
 import { runDoctor } from "./commands/doctor.ts";
 import { runMcp } from "./commands/mcp.ts";
@@ -32,6 +33,9 @@ export async function main(argv: string[]): Promise<void> {
         break;
       case "run":
         code = await runRun(parsed);
+        break;
+      case "demo":
+        code = await runDemo(parsed);
         break;
       case "doctor":
         code = await runDoctor(parsed);

@@ -250,12 +250,21 @@ export const AutoDemoConfigSchema = z.object({
   output: z.object({
     dir: z.string().min(1).default("public/demos"),
     clean: z.boolean().default(true),
+    /** Show a small "Made with AutoDemo" footer in generated walkthroughs. */
+    branding: z.boolean().default(true),
   }),
   llm: z
     .object({
-      provider: z.enum(["openai", "anthropic", "ollama"]).default("openai"),
-      model: z.string().min(1).default("gpt-4o-mini"),
-      apiKeyEnv: z.string().min(1).default("OPENAI_API_KEY"),
+      /**
+       * Provider for AI (`act`) steps. When omitted, AutoDemo auto-detects the
+       * provider from well-known env vars (ANTHROPIC_API_KEY, OPENAI_API_KEY,
+       * GOOGLE_API_KEY/GEMINI_API_KEY, GROQ_API_KEY, OLLAMA_HOST).
+       */
+      provider: z.enum(["openai", "anthropic", "google", "groq", "ollama", "custom"]).optional(),
+      model: z.string().min(1).optional(),
+      apiKeyEnv: z.string().min(1).optional(),
+      /** OpenAI-compatible endpoint for local/self-hosted models (Ollama, vLLM, LM Studio). */
+      baseUrl: z.string().url().optional(),
     })
     .optional(),
   browser: z

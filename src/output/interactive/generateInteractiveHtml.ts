@@ -1,4 +1,12 @@
-export function generateInteractiveHtml(): string {
+const BRANDING_FOOTER = `
+    <footer class="branding">
+      <a href="https://github.com/praveen-palanisamy/autodemo" target="_blank" rel="noopener">
+        Made with <strong>AutoDemo</strong> — demos as code
+      </a>
+    </footer>`;
+
+export function generateInteractiveHtml(opts?: { branding?: boolean }): string {
+  const branding = opts?.branding ?? true;
   // Single static file that loads run.json and displays step screenshots.
   return `<!doctype html>
 <html lang="en">
@@ -25,6 +33,9 @@ export function generateInteractiveHtml(): string {
       .step .t { font-weight: 600; }
       .step .s { opacity: 0.75; }
       .note { margin-top: 8px; opacity: 0.9; font-size: 13px; }
+      .branding { padding: 8px 16px; text-align: center; font-size: 11px; opacity: 0.6; }
+      .branding a { color: inherit; text-decoration: none; }
+      .branding a:hover { text-decoration: underline; }
       @media (max-width: 980px) { main { grid-template-columns: 1fr; } .steps { max-height: 240px; } }
     </style>
   </head>
@@ -46,7 +57,7 @@ export function generateInteractiveHtml(): string {
         <div class="note" id="note"></div>
         <div class="steps" id="steps" role="list"></div>
       </div>
-    </main>
+    </main>${branding ? BRANDING_FOOTER : ""}
     <script>
       const state = { run: null, idx: 0 };
       const $ = (id) => document.getElementById(id);

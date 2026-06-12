@@ -7,7 +7,7 @@ export type GlobalFlags = {
 
 export type ParsedCli = {
   global: GlobalFlags;
-  command?: "help" | "init" | "record" | "run" | "doctor" | "mcp";
+  command?: "help" | "init" | "record" | "run" | "demo" | "doctor" | "mcp";
   args: string[];
 };
 

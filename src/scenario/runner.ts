@@ -1,6 +1,7 @@
 import path from "node:path";
 
 import type { AutoDemoConfig, ScenarioStep } from "../config/schema.ts";
+import { resolveLlm } from "../config/llm.ts";
 import {
   createPlaywrightSession,
   createPlaywrightSessionFromCdp,
@@ -176,15 +177,17 @@ export async function runScenario(opts: RunScenarioOpts): Promise<RunScenarioRes
     ? resolveCwdPath(opts.config.auth.statePath)
     : undefined;
 
+  const resolvedLlm = needsStagehand ? resolveLlm({ config: opts.config.llm }) : undefined;
   const stagehandSession = needsStagehand
     ? await createStagehandSession({
         env: opts.config.stagehand?.mode === "browserbase" ? "BROWSERBASE" : "LOCAL",
         browserbaseApiKey: stagehandApiKey,
         headless,
         viewport: opts.config.browser.viewport,
-        modelName: opts.config.llm?.model,
-        llmProvider: opts.config.llm?.provider,
-        llmApiKey: opts.config.llm?.apiKeyEnv ? process.env[opts.config.llm.apiKeyEnv] : undefined,
+        modelName: resolvedLlm?.modelName,
+        llmProvider: resolvedLlm?.provider,
+        llmApiKey: resolvedLlm?.apiKey,
+        llmBaseUrl: resolvedLlm?.baseUrl,
       })
     : undefined;
 
@@ -450,7 +453,9 @@ export async function runScenario(opts: RunScenarioOpts): Promise<RunScenarioRes
     }
   }
 
-  const interactiveHtmlAbs = await writeInteractiveHtml(outDir);
+  const interactiveHtmlAbs = await writeInteractiveHtml(outDir, {
+    branding: opts.config.output.branding ?? true,
+  });
   const finishedAtMs = Date.now();
   const finishedAt = new Date(finishedAtMs).toISOString();
 

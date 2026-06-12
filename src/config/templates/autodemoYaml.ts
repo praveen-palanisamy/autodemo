@@ -8,7 +8,8 @@ export function defaultAutodemoYamlTemplate(): string {
 #
 # Notes:
 # - output.clean: true deletes the previous \`<output.dir>/<scenario>/latest\` folder before writing new artifacts.
-# - type: act steps require an LLM API key (e.g. OPENAI_API_KEY) and Stagehand config.
+# - type: act steps need an LLM key (auto-detected from ANTHROPIC_API_KEY, OPENAI_API_KEY,
+#   GOOGLE_API_KEY, GROQ_API_KEY, or a local OLLAMA_HOST). Deterministic steps need none.
 
 project:
   name: MyApp
@@ -70,11 +71,15 @@ auth:
 #   Close the opened browser window to save your recording.
 # - Non-interactive record (LLM act): bun run dev -- record --url http://localhost:3000 --instruction "..." --name signup
 
-# Stagehand is used for \`type: act\` steps (LLM-native).
-llm:
-  provider: openai # openai | anthropic | ollama
-  model: gpt-4o-mini
-  apiKeyEnv: OPENAI_API_KEY
+# LLM for AI (\`type: act\`) steps. Optional — when omitted, AutoDemo auto-detects
+# a provider from env vars: ANTHROPIC_API_KEY, OPENAI_API_KEY, GOOGLE_API_KEY /
+# GEMINI_API_KEY, GROQ_API_KEY, or OLLAMA_HOST (local models).
+# Uncomment to pin one explicitly:
+# llm:
+#   provider: anthropic # openai | anthropic | google | groq | ollama | custom
+#   model: claude-3-5-haiku-latest
+#   apiKeyEnv: ANTHROPIC_API_KEY
+#   # baseUrl: http://localhost:11434/v1 # OpenAI-compatible endpoint (Ollama, vLLM, LM Studio)
 
 stagehand:
   mode: local # local | browserbase

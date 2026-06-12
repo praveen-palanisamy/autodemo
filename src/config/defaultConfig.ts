@@ -8,11 +8,9 @@ export function defaultConfig(): Record<string, unknown> {
       dir: "public/demos",
       clean: true,
     },
-    llm: {
-      provider: "openai",
-      model: "gpt-4o-mini",
-      apiKeyEnv: "OPENAI_API_KEY",
-    },
+    // llm is intentionally omitted: AutoDemo auto-detects the provider from
+    // well-known env vars (ANTHROPIC_API_KEY, OPENAI_API_KEY, GOOGLE_API_KEY,
+    // GROQ_API_KEY, OLLAMA_HOST). Add an `llm:` section to pin one explicitly.
     browser: {
       headless: false,
       viewport: { width: 1600, height: 900 },

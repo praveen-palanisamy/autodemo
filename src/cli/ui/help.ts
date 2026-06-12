@@ -19,20 +19,36 @@ export function printHelp(parsed: ParsedCli): void {
             "  autodemo record --interactive   # capture real interactions",
             "",
           ]
-        : [];
+        : command === "demo"
+          ? [
+              "Demo (one-shot, no config needed):",
+              '  autodemo demo "Sign up and open the dashboard" --url http://localhost:3000',
+              "",
+              "Options:",
+              "  --url <url>          App to demo (required unless config has baseUrl)",
+              "  --name <name>        Scenario name (default: demo)",
+              "  --provider <p>       openai | anthropic | google | groq | ollama | custom",
+              "  --model <m>          Model id (default depends on provider)",
+              "  --headless           Run browser headless",
+              "  --no-video           Skip MP4 (faster; walkthrough only)",
+              "  --save               Persist the generated scenario into .autodemo.yml",
+              "",
+            ]
+          : [];
 
   const lines = [
-    `autodemo — Stagehand-first demo automation (v${VERSION})`,
+    `autodemo — demos as code: videos + walkthroughs from your running app (v${VERSION})`,
     "",
     "Usage:",
     "  autodemo <command> [options]",
     "",
     ...cmdLines,
     "Commands:",
+    '  demo "<instruction>" One-shot: instruction → video + walkthrough (no config needed)',
     "  init                 Create .autodemo.yml (idempotent) and output dir",
     "  record               Generate/update a scenario from an instruction",
     "  run <scenario>|--all Run a scenario (or all scenarios)",
-    "  doctor               Verify local dependencies (ffmpeg, browsers, etc.)",
+    "  doctor               Verify local dependencies (ffmpeg, browsers, LLM keys)",
     "  mcp                  Start MCP server over stdio",
     "",
     "Global options:",
