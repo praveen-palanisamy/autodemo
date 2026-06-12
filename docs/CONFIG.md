@@ -103,14 +103,39 @@ Scenario optional fields:
 
 - `videoStartStep`: trims the final MP4 so it starts shortly before this step. Use it to remove login/auth setup, page-load spinners, or first-run framework noise while preserving the deterministic setup steps.
 
-### Stagehand config
+### LLM providers (`llm`) — for AI `act` steps
 
-AutoDemo supports Stagehand steps via `type: act`.
+AI steps run through Stagehand with **any provider**. When the `llm:` section is omitted, AutoDemo auto-detects one from well-known env vars (in this order):
 
-Notes:
+| Provider | Detected from | Default model |
+| --- | --- | --- |
+| `anthropic` | `ANTHROPIC_API_KEY` | `claude-3-5-haiku-latest` |
+| `openai` | `OPENAI_API_KEY` | `gpt-4o-mini` |
+| `google` | `GOOGLE_API_KEY` / `GEMINI_API_KEY` | `gemini-2.0-flash` |
+| `groq` | `GROQ_API_KEY` | `llama-3.3-70b-versatile` |
+| `ollama` (local) | `OLLAMA_HOST` | `llama3.3` |
 
-- Stagehand’s upstream docs recommend **Node** over Bun for maximum Playwright compatibility; we still run under **Bun** by default.
-- If you run `act` steps, you’ll typically need an LLM provider key (e.g., `OPENAI_API_KEY`) available in your environment.
+Pin one explicitly:
+
+```yaml
+llm:
+  provider: anthropic # openai | anthropic | google | groq | ollama | custom
+  model: claude-3-5-haiku-latest
+  apiKeyEnv: ANTHROPIC_API_KEY # optional; provider default otherwise
+```
+
+Local / self-hosted (any OpenAI-compatible endpoint — Ollama, vLLM, LM Studio):
+
+```yaml
+llm:
+  provider: ollama
+  model: llama3.3
+  baseUrl: http://localhost:11434/v1
+```
+
+Overrides without editing config: `AUTODEMO_LLM_PROVIDER`, `AUTODEMO_LLM_MODEL`, `AUTODEMO_LLM_API_KEY_ENV`, `AUTODEMO_LLM_BASE_URL` env vars, or `--provider`/`--model` on `autodemo demo`.
+
+**Deterministic step types need no LLM at all** — scenarios using only `click`/`fill`/`waitFor`/etc. run with zero keys (ideal for CI).
 
 ### Cursor overlay (videos/screenshots)
 
@@ -188,3 +213,14 @@ When `output.clean: true`, AutoDemo **deletes the previous output folder for the
 - `output.dir/<scenario>/latest`
 
 This keeps `latest/` consistent and avoids stale screenshots/videos lingering between runs.
+
+### `output.branding`
+
+Generated walkthroughs include a small "Made with AutoDemo" footer link. Disable it with:
+
+```yaml
+output:
+  branding: false
+```
+
+or per-run with `autodemo run … --no-branding`.
