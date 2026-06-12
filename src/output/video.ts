@@ -16,6 +16,7 @@ export async function convertWebmToMp4(opts: {
   width?: number;
   height?: number;
   fps?: number;
+  startMs?: number;
 }): Promise<void> {
   await new Promise<void>((resolve, reject) => {
     const width = opts.width ?? 1440;
@@ -25,6 +26,7 @@ export async function convertWebmToMp4(opts: {
       "-y",
       "-i",
       opts.inputWebm,
+      ...(opts.startMs && opts.startMs > 0 ? ["-ss", (opts.startMs / 1000).toFixed(3)] : []),
       "-vf",
       `scale=${width}:${height}:force_original_aspect_ratio=decrease,pad=${width}:${height}:(ow-iw)/2:(oh-ih)/2:color=0x05050a,setsar=1,fps=${fps}`,
       "-c:v",

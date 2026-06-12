@@ -29,6 +29,13 @@ export function defaultConfig(): Record<string, unknown> {
         transitionMs: 800,
         endPauseMs: 1200,
       },
+      capture: {
+        hideDevOverlays: true,
+      },
+      video: {
+        recordSize: { width: 1280, height: 720 },
+        trimStartBeforeMs: 600,
+      },
     },
     recording: {
       events: ["click", "fill", "scroll"],

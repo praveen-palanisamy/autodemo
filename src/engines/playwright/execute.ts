@@ -207,7 +207,6 @@ export async function executePlaywrightStep(opts: {
             el.style.padding = "14px 18px";
             el.style.borderRadius = "18px";
             el.style.background = "rgba(8, 7, 16, 0.86)";
-            el.style.backdropFilter = "blur(12px)";
             el.style.color = "#ffffff";
             el.style.font =
               "600 22px/1.35 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif";
@@ -219,11 +218,9 @@ export async function executePlaywrightStep(opts: {
             document.body.appendChild(el);
             requestAnimationFrame(() => {
               el.style.opacity = "1";
-              el.style.transform = "translateX(-50%) translateY(-4px)";
             });
             setTimeout(() => {
               el.style.opacity = "0";
-              el.style.transform = "translateX(-50%) translateY(8px)";
               setTimeout(() => {
                 el.remove();
                 resolve();

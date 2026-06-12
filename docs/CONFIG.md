@@ -27,6 +27,11 @@ browser:
   transitions:
     transitionMs: 800 # delay after each step (UI settle + video pacing)
     endPauseMs: 1200 # extra pause after final step (video tail)
+  capture:
+    hideDevOverlays: true # hide Next.js/Vite/Webpack dev overlays in product demos
+  video:
+    recordSize: { width: 1280, height: 720 } # stable raw recorder surface
+    trimStartBeforeMs: 600
 
 auth:
   # Optional Playwright storage state for authenticated demos.
@@ -42,6 +47,7 @@ recording:
 scenarios:
   signup:
     description: "Signup flow"
+    videoStartStep: 1
     steps:
       - type: goto
         url: /signup
@@ -92,6 +98,10 @@ Common optional fields:
 - `note`: shown in the interactive demo
 - `capture: false`: disables screenshot capture for that step
 - `asset`: `{ name, selector?, fullPage? }`, emits a named PNG under `assets/<name>.png` after the step succeeds
+
+Scenario optional fields:
+
+- `videoStartStep`: trims the final MP4 so it starts shortly before this step. Use it to remove login/auth setup, page-load spinners, or first-run framework noise while preserving the deterministic setup steps.
 
 ### Stagehand config
 
@@ -157,6 +167,12 @@ AutoDemo intentionally waits between steps so screenshots and video feel human-p
 
 - `transitionMs`: applied after each step (including `act` and fallback steps).
 - `endPauseMs`: applied after the last step (useful when producing video so it doesn’t “hard cut”).
+
+### Capture quality (`browser.capture` and `browser.video`)
+
+- `browser.capture.hideDevOverlays` defaults to `true`. It hides common framework overlays such as Next.js dev indicators, Vite overlays, and Webpack dev-server overlays. Set it to `false` only when the demo is intentionally documenting a debug workflow.
+- `browser.video.recordSize` defaults to `1280x720`. Playwright’s raw recorder is most stable at a conventional 16:9 surface; AutoDemo then normalizes the final MP4 to `browser.viewport`.
+- `browser.video.trimStartBeforeMs` controls the small lead-in retained before `videoStartStep`.
 
 ### Interactive recording capture (`recording`)
 

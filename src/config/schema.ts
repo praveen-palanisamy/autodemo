@@ -186,6 +186,26 @@ const TransitionsSchema = z.object({
   endPauseMs: z.number().int().positive().default(1200),
 });
 
+const CaptureSchema = z.object({
+  /**
+   * Hide framework/debug overlays that are useful during development but should not
+   * appear in product-demo captures. Set false when deliberately recording debug UI.
+   */
+  hideDevOverlays: z.boolean().default(true),
+});
+
+const VideoSchema = z.object({
+  /**
+   * Playwright's raw video recorder is most stable at conventional 16:9 video
+   * surfaces. The final MP4 is still normalized to the configured viewport size.
+   */
+  recordSize: ViewportSchema.default({ width: 1280, height: 720 }),
+  /**
+   * Keep a small lead-in before a scenario's videoStartStep when trimming setup frames.
+   */
+  trimStartBeforeMs: z.number().int().nonnegative().default(600),
+});
+
 export const ScenarioStepSchema = z.discriminatedUnion("type", [
   StepGotoSchema,
   StepActSchema,
@@ -209,6 +229,7 @@ export type ScenarioStep = z.infer<typeof ScenarioStepSchema>;
 
 export const ScenarioSchema = z.object({
   description: z.string().optional(),
+  videoStartStep: z.number().int().nonnegative().optional(),
   story: z
     .object({
       title: z.string().min(1).optional(),
@@ -244,6 +265,8 @@ export const AutoDemoConfigSchema = z.object({
       recordVideo: z.boolean().default(false),
       cursor: CursorSchema.default({}),
       transitions: TransitionsSchema.default({}),
+      capture: CaptureSchema.default({}),
+      video: VideoSchema.default({}),
     })
     .default({}),
   auth: z

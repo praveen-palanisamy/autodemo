@@ -15,6 +15,7 @@ import { writeInteractiveHtml, writeRunJson } from "../output/writeArtifacts.ts"
 import { convertWebmToMp4, isFfmpegAvailable } from "../output/video.ts";
 import { ensureDir, rmrf } from "../utils/fs.ts";
 import { installCursorOverlay } from "../utils/cursorOverlay.ts";
+import { installCaptureGuards } from "../utils/captureGuards.ts";
 import { appendFile } from "node:fs/promises";
 import { mkdir } from "node:fs/promises";
 
@@ -197,10 +198,15 @@ export async function runScenario(opts: RunScenarioOpts): Promise<RunScenarioRes
         outDir,
         headless,
         viewport: opts.config.browser.viewport,
+        recordVideoSize: opts.config.browser.video?.recordSize,
         recordVideo: opts.config.browser.recordVideo,
         enableTracing: true, // needed to export trace on failure
         storageStatePath,
       });
+
+  if (opts.config.browser.capture?.hideDevOverlays ?? true) {
+    await installCaptureGuards(session.page).catch(() => {});
+  }
 
   // Ensure cursor is visible in videos/screenshots and highlight clicks.
   const cursorOpts = opts.config.browser.cursor ?? {
@@ -227,6 +233,8 @@ export async function runScenario(opts: RunScenarioOpts): Promise<RunScenarioRes
   let status: RunStatus = "success";
   let failureMessage: string | undefined;
   let traceZipPathRel: string | undefined;
+  let videoStartOffsetMs: number | undefined =
+    scenario.videoStartStep === undefined ? undefined : 0;
   const transitionMs = opts.config.browser.transitions?.transitionMs ?? 800;
   const endPauseMs = opts.config.browser.transitions?.endPauseMs ?? 1200;
   const logsDir = path.join(process.cwd(), "logs");
@@ -251,6 +259,13 @@ export async function runScenario(opts: RunScenarioOpts): Promise<RunScenarioRes
     const stepStartedAt = new Date(stepStartedMs).toISOString();
 
     try {
+      if (i === scenario.videoStartStep) {
+        videoStartOffsetMs = Math.max(
+          0,
+          stepStartedMs - startedAtMs - (opts.config.browser.video?.trimStartBeforeMs ?? 600),
+        );
+      }
+
       if (step.type === "act") {
         if (!stagehandSession) throw new Error("Stagehand session not initialized");
         await executeStagehandStep({
@@ -426,6 +441,7 @@ export async function runScenario(opts: RunScenarioOpts): Promise<RunScenarioRes
           width: opts.config.browser.viewport.width,
           height: opts.config.browser.viewport.height,
           fps: 30,
+          startMs: videoStartOffsetMs,
         });
         videoMp4PathRel = "video.mp4";
       }

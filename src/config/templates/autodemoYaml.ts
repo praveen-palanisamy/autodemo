@@ -50,6 +50,14 @@ browser:
     transitionMs: 800
     # Extra pause after the final step (keeps video from ending abruptly).
     endPauseMs: 1200
+  capture:
+    # Hide framework/debug overlays such as Next.js dev indicators in demos.
+    hideDevOverlays: true
+  video:
+    # Stable raw Playwright recording surface. Final MP4 is normalized to browser.viewport.
+    recordSize: { width: 1280, height: 720 }
+    # When a scenario sets videoStartStep, keep this much lead-in before that step.
+    trimStartBeforeMs: 600
 
 # Optional Playwright storage state for authenticated demos.
 # Keep these files ignored because they may contain session tokens.

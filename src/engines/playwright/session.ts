@@ -16,12 +16,15 @@ export type CreatePlaywrightSessionOpts = {
   outDir: string;
   headless: boolean;
   viewport: { width: number; height: number };
+  recordVideoSize?: { width: number; height: number };
   recordVideo: boolean;
   enableTracing: boolean;
   storageStatePath?: string;
 };
 
-export async function createPlaywrightSession(opts: CreatePlaywrightSessionOpts): Promise<PlaywrightSession> {
+export async function createPlaywrightSession(
+  opts: CreatePlaywrightSessionOpts,
+): Promise<PlaywrightSession> {
   const { chromium } = await import("@playwright/test");
 
   const browser = await chromium.launch({ headless: opts.headless });
@@ -29,12 +32,14 @@ export async function createPlaywrightSession(opts: CreatePlaywrightSessionOpts)
 
   const context = await browser.newContext({
     viewport: opts.viewport,
-    ...(opts.storageStatePath && existsSync(opts.storageStatePath) ? { storageState: opts.storageStatePath } : {}),
+    ...(opts.storageStatePath && existsSync(opts.storageStatePath)
+      ? { storageState: opts.storageStatePath }
+      : {}),
     ...(opts.recordVideo
       ? {
           recordVideo: {
             dir: videoDir!,
-            size: opts.viewport,
+            size: opts.recordVideoSize ?? opts.viewport,
           },
         }
       : {}),
@@ -108,5 +113,3 @@ export async function closePlaywrightSession(
   await session.browser.close();
   return { videoWebmPath };
 }
-
-
