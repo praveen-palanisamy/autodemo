@@ -1,20 +1,35 @@
-# macOS
+# OS
 .DS_Store
 
-# dependencies
+# Dependencies
 node_modules/
 
-# Next.js
+# Editor / tooling state
+.vscode/
+.idea/
+.specstory/
+.cursorindexingignore
+
+# Internal-only docs (never published; see CONTRIBUTING.md for public docs)
+predev-docs/
+private/
+
+# Next.js (integration test fixture)
 .next/
 
-# build outputs
+# Build outputs
 dist/
+site/dist/
 coverage/
 
-# logs
+# Logs and scratch output
+logs/
 *.log
+console.log
+.tmp/
+Users/
 
-# env files (never commit secrets)
+# Env files (never commit secrets)
 .env
 .env.*
 
@@ -24,7 +39,10 @@ test-results/
 
 # AutoDemo generated artifacts (tool output)
 .autodemo-out/
-.autodemo/state/
+.autodemo/
 .autodemo.yml
 *.autodemo.yml
+
+# Generated demo artifacts are produced by CI (update-demos workflow) and
+# committed intentionally with `git add -f public/demos` when refreshed.
 public/demos/

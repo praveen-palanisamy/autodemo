@@ -19,10 +19,19 @@
   "license": "MIT",
   "private": false,
   "type": "module",
+  "author": "Praveen Palanisamy",
+  "homepage": "https://praveen-palanisamy.github.io/autodemo/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/praveen-palanisamy/autodemo.git"
+  },
+  "bugs": {
+    "url": "https://github.com/praveen-palanisamy/autodemo/issues"
+  },
   "bin": {
     "autodemo": "./bin/autodemo.ts"
   },
-  "files": ["bin", "src", "docs", "predev-docs", "configs", "scripts", "README.md", "CHANGELOG.md", "bun.lock"],
+  "files": ["bin", "src", "docs", "README.md", "CHANGELOG.md", "LICENSE"],
   "engines": {
     "bun": ">=1.3.0"
   },
