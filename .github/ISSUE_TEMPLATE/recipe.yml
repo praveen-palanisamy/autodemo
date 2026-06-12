@@ -1,0 +1,29 @@
+name: Scenario recipe
+description: Share a working .autodemo.yml recipe for a framework or flow
+labels: ["recipe", "community"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Recipes help everyone ship demos faster — auth flows, checkouts, onboarding tours, framework setups.
+        Great recipes get merged into `docs/RECIPES.md` with credit.
+  - type: input
+    id: title
+    attributes:
+      label: Recipe name
+      placeholder: "Next.js + Clerk authenticated dashboard demo"
+    validations:
+      required: true
+  - type: textarea
+    id: yaml
+    attributes:
+      label: The recipe
+      description: A runnable scenario (redact anything private).
+      render: yaml
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes / gotchas
+      placeholder: "Needs auth.statePath seeded by a login scenario first..."

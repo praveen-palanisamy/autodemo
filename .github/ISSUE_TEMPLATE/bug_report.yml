@@ -1,0 +1,49 @@
+name: Bug report
+description: Something broke or behaved unexpectedly
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report! A `doctor` output and a failing `run.json` make most bugs a 5-minute fix.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you do, what did you expect, what happened instead?
+      placeholder: |
+        1. Ran `autodemo run signup --url http://localhost:3000`
+        2. Expected video.mp4, got ...
+    validations:
+      required: true
+  - type: textarea
+    id: doctor
+    attributes:
+      label: "`autodemo doctor --json` output"
+      render: json
+    validations:
+      required: true
+  - type: textarea
+    id: config
+    attributes:
+      label: Relevant `.autodemo.yml` (redact secrets/URLs as needed)
+      render: yaml
+  - type: textarea
+    id: runjson
+    attributes:
+      label: "`run.json` or error output (redacted)"
+      render: json
+  - type: input
+    id: version
+    attributes:
+      label: AutoDemo version
+      placeholder: "0.1.0 (autodemo --help shows it)"
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: OS / runtime
+      placeholder: "macOS 15 / Bun 1.3.5, or ubuntu-latest in GitHub Actions"
+    validations:
+      required: true

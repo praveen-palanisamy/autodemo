@@ -1,0 +1,39 @@
+name: Feature request
+description: Propose an improvement or new capability
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+      description: Describe the workflow pain, not just the feature.
+      placeholder: "Every release I have to ... and AutoDemo can't ..."
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: CLI flags, config shape, or behavior you'd expect.
+      placeholder: |
+        autodemo run --all --gif
+        # or
+        output:
+          formats: [mp4, gif]
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+  - type: dropdown
+    id: usage
+    attributes:
+      label: How do you use AutoDemo?
+      options:
+        - CLI locally
+        - GitHub Action / CI
+        - MCP (agent tooling)
+        - Library / other
+    validations:
+      required: true

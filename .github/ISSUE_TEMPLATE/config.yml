@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Questions & ideas (Discussions)
+    url: https://github.com/praveen-palanisamy/autodemo/discussions
+    about: Ask questions, share what you built (Show & Tell), and discuss ideas.
+  - name: Security vulnerability
+    url: https://github.com/praveen-palanisamy/autodemo/security/advisories/new
+    about: Report security issues privately — never in a public issue.
