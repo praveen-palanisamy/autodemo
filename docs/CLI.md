@@ -8,7 +8,7 @@ All commands support:
 - `--json`: machine-readable JSON output (implies `--no-tui`)
 - `--help` / `-h`: show help
 
-> Examples use `autodemo` (global install). Zero-install works too: `bunx autodemo …` / `npx autodemo …`.
+> Examples use the `autodemo` CLI (global install). Zero-install: `bunx @praveen-palanisamy/autodemo …` / `npx @praveen-palanisamy/autodemo …`.
 > Contributing to this repo? Use `bun run dev -- <command>` to run from source.
 
 ## Commands

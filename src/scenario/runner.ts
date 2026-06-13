@@ -17,6 +17,7 @@ import { convertWebmToMp4, assembleMp4FromFrames, isFfmpegAvailable, type VideoF
 import { ensureDir, rmrf } from "../utils/fs.ts";
 import { installCursorOverlay } from "../utils/cursorOverlay.ts";
 import { installCaptureGuards } from "../utils/captureGuards.ts";
+import { installBrandingWatermark } from "../branding/watermark.ts";
 import {
   resolveRecordVideoSize,
   stabilizePageForVideoCapture,
@@ -246,6 +247,14 @@ export async function runScenario(opts: RunScenarioOpts): Promise<RunScenarioRes
     });
   } catch {
     // best-effort; ignore overlay failures
+  }
+
+  if (opts.config.output.branding ?? true) {
+    try {
+      await installBrandingWatermark(session.page);
+    } catch {
+      // best-effort
+    }
   }
 
   const steps: RunJsonStep[] = [];

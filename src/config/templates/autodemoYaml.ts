@@ -4,7 +4,7 @@ export function defaultAutodemoYamlTemplate(): string {
 #
 # Quick start:
 # - Start your app (e.g. Next.js): \`bunx next dev --turbo\`
-# - Run a scenario: \`bunx autodemo run signup --url http://localhost:3000\`
+# - Run a scenario: \`bunx @praveen-palanisamy/autodemo run signup --url http://localhost:3000\`
 #
 # Notes:
 # - output.clean: true deletes the previous \`<output.dir>/<scenario>/latest\` folder before writing new artifacts.

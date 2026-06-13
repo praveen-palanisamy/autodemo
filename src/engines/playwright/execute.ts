@@ -15,6 +15,7 @@ export async function executePlaywrightStep(opts: {
 
   const locatorFor = (selector: string): Locator => page.locator(selector).first();
   const wait = (ms: number) => page.waitForTimeout(ms);
+  const waitTimeoutMs = (timeoutMs?: number) => timeoutMs ?? 30_000;
 
   async function waitForPageToSettle() {
     try {
@@ -136,16 +137,18 @@ export async function executePlaywrightStep(opts: {
     }
     case "waitForSelector": {
       const loc = locatorFor(step.selector);
-      await loc.waitFor({ state: "visible", timeout: step.timeoutMs });
+      await loc.waitFor({ state: "visible", timeout: waitTimeoutMs(step.timeoutMs) });
       return;
     }
     case "waitFor": {
       const loc = page.locator(`text=${step.text}`);
-      await loc.first().waitFor({ state: "visible", timeout: step.timeoutMs });
+      await loc.first().waitFor({ state: "visible", timeout: waitTimeoutMs(step.timeoutMs) });
       return;
     }
     case "expectVisible": {
-      await page.locator(step.selector).waitFor({ state: "visible", timeout: step.timeoutMs });
+      await page
+        .locator(step.selector)
+        .waitFor({ state: "visible", timeout: waitTimeoutMs(step.timeoutMs) });
       return;
     }
     case "expectText": {

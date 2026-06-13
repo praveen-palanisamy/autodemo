@@ -6,7 +6,8 @@ describe("generateInteractiveHtml", () => {
   test("includes branding footer by default", () => {
     const html = generateInteractiveHtml();
     expect(html).toContain("Made with");
-    expect(html).toContain("github.com/praveen-palanisamy/autodemo");
+    expect(html).toContain("praveen-palanisamy.github.io/autodemo");
+    expect(html).toContain("@praveen-palanisamy/autodemo");
   });
 
   test("omits branding footer when disabled", () => {

@@ -33,6 +33,7 @@ jobs:
 
   integration:
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
 
@@ -63,6 +64,7 @@ jobs:
   # This is the same path users take with `uses: praveen-palanisamy/autodemo@v0`.
   action-smoke:
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
 
@@ -88,4 +90,5 @@ jobs:
         with:
           url: http://127.0.0.1:4173
           config: configs/site-demo.autodemo.yaml
+          scenario: site-landing
           artifact-name: action-smoke-demos

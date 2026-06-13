@@ -5,7 +5,7 @@ AutoDemo ships an MCP server over stdio.
 Start it:
 
 ```bash
-bunx autodemo mcp --no-tui
+bunx @praveen-palanisamy/autodemo mcp --no-tui
 ```
 
 See [`docs/AGENTS.md`](AGENTS.md) for ready-made Cursor / Claude Code / Codex registration snippets and an agent rules template.

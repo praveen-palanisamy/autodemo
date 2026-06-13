@@ -26,7 +26,7 @@ case "$(uname -s)" in
   Darwin | Linux) ;;
   *)
     say "This installer supports macOS, Linux, and WSL."
-    say "On Windows, use PowerShell:  npm install -g autodemo && npx playwright install chromium"
+    say "On Windows, use PowerShell:  npm install -g @praveen-palanisamy/autodemo && npx playwright install chromium"
     exit 1
     ;;
 esac
@@ -43,11 +43,11 @@ else
 fi
 
 # 2. AutoDemo CLI
-step "Installing autodemo (${VERSION})"
+step "Installing @praveen-palanisamy/autodemo (${VERSION})"
 if [ "$VERSION" = "latest" ]; then
-  bun add -g autodemo
+  bun add -g "@praveen-palanisamy/autodemo"
 else
-  bun add -g "autodemo@${VERSION}"
+  bun add -g "@praveen-palanisamy/autodemo@${VERSION}"
 fi
 
 # 3. Playwright Chromium

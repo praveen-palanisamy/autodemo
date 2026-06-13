@@ -7,9 +7,9 @@ on:
   workflow_dispatch:
     inputs:
       ref:
-        description: "Git ref to publish (tag or branch). Default: v0.1.0"
+        description: "Git ref to publish (tag or branch). Default: v0.1.1"
         required: false
-        default: "v0.1.0"
+        default: "v0.1.1"
       dry_run:
         description: "Run npm publish --dry-run instead of publishing"
         type: boolean

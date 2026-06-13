@@ -1,9 +1,4 @@
-const BRANDING_FOOTER = `
-    <footer class="branding">
-      <a href="https://github.com/praveen-palanisamy/autodemo" target="_blank" rel="noopener">
-        Made with <strong>AutoDemo</strong> — demos as code
-      </a>
-    </footer>`;
+import { BRAND, brandingFooterHtml } from "../../branding/constants.ts";
 
 export function generateInteractiveHtml(opts?: { branding?: boolean }): string {
   const branding = opts?.branding ?? true;
@@ -13,7 +8,7 @@ export function generateInteractiveHtml(opts?: { branding?: boolean }): string {
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>AutoDemo</title>
+    <title>${BRAND.name}</title>
     <style>
       :root { color-scheme: light dark; }
       body { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; margin: 0; }
@@ -41,7 +36,7 @@ export function generateInteractiveHtml(opts?: { branding?: boolean }): string {
   </head>
   <body>
     <header>
-      <h1 id="title">AutoDemo</h1>
+      <h1 id="title">${BRAND.name}</h1>
       <div class="meta" id="meta"></div>
     </header>
     <main>
@@ -57,7 +52,7 @@ export function generateInteractiveHtml(opts?: { branding?: boolean }): string {
         <div class="note" id="note"></div>
         <div class="steps" id="steps" role="list"></div>
       </div>
-    </main>${branding ? BRANDING_FOOTER : ""}
+    </main>${branding ? brandingFooterHtml() : ""}
     <script>
       const state = { run: null, idx: 0 };
       const $ = (id) => document.getElementById(id);

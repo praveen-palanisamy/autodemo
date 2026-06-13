@@ -10,7 +10,7 @@ Two integration surfaces:
 ## 1. MCP server
 
 ```bash
-bunx autodemo mcp --no-tui
+bunx @praveen-palanisamy/autodemo mcp --no-tui
 ```
 
 Register it with your agent runtime:
@@ -31,7 +31,7 @@ Register it with your agent runtime:
 ### Claude Code (`claude mcp add`)
 
 ```bash
-claude mcp add autodemo -- bunx autodemo mcp --no-tui
+claude mcp add autodemo -- bunx @praveen-palanisamy/autodemo mcp --no-tui
 ```
 
 ### Codex (`~/.codex/config.toml`)

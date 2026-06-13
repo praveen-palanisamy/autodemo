@@ -19,6 +19,7 @@ Prefer idempotent scripts in `scripts/` (and `package.json` aliases) over ad-hoc
 
 - Changes must work in production deployment and local Firebase/emulator paths where applicable.
 - Demo artifacts under `public/demos/` are regenerated in CI; landing page video uses `data-src` + poster so autodemo captures stay poster-only (`holdEmbeddedVideos` in capture guards).
+- npm package: `@praveen-palanisamy/autodemo` (CLI binary name remains `autodemo`).
 
 ## Code style
 

@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.1.1 — npm scoped package + CI reliability
+
+- **npm**: publish as `@praveen-palanisamy/autodemo` (unscoped `autodemo` blocked by npm similarity policy). CLI command remains `autodemo`.
+- **CI**: fix infinite hang when `waitForSelector` omits `timeoutMs` (Playwright treats `undefined` as no timeout).
+- **CI**: action smoke test runs only `site-landing` (walkthrough scenario needs a two-pass site build).
+- **Branding**: walkthrough footer links product site + npm package; optional video watermark when `output.branding` is enabled.
+
 ## v0.1.0 — Public launch
 
 **Demos as code.** First public release of AutoDemo: generate demo videos, interactive walkthroughs, and marketing captures from any running web app — locally, in CI, or from an AI agent.
