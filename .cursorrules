@@ -1,4 +1,4 @@
-Always remember to save working checkpoints and commit code after implementing a feature or fixing and ensuring that the app is in a working state. Carefully review and stage all relevant changes, commit with a descriptive message.
+Always remember to save working checkpoints and commit code after implementing a feature or fixing and ensuring that the app is in a working state. Carefully review and stage all relevant changes, commit with a descriptive message. Do not leave completed feature or fix work uncommitted — stage and commit before ending the session unless the user explicitly asked not to. See AGENTS.md for agent workflow details.
 Ensure you always prioritize fixes in the code or create scripts and run them and don't run one off comands in the commandline . It needs to be reproducible. Ensure you maintain idempotency with scripts.
 Keep docs, developer docs, README updated and reflecting the current/latest status and remove any stale information or detail especially after code changes.
 Prefer modular, reusable SOLID code and avoid large number of lines in a single file.

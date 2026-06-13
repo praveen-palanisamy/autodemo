@@ -148,12 +148,58 @@ code {
   font-size: 13px;
 }
 
-.demoVideo {
-  width: 100%;
+.demoVideoShell {
+  position: relative;
   border: 1px solid var(--border);
   border-radius: 16px;
+  overflow: hidden;
   background: #000;
+}
+
+.demoVideo {
+  width: 100%;
   display: block;
+  vertical-align: middle;
+}
+
+.demoVideoOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+  border: none;
+  cursor: pointer;
+  background: rgba(0, 0, 0, 0.08);
+  transition: opacity 0.25s ease;
+}
+
+.demoVideoOverlay.is-hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.demoVideoPlayBtn {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.55);
+  border: 2px solid rgba(255, 255, 255, 0.88);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+}
+
+.demoVideoOverlay:hover .demoVideoPlayBtn {
+  background: rgba(0, 0, 0, 0.68);
+  transform: scale(1.04);
+}
+
+.demoVideoOverlay:active .demoVideoPlayBtn {
+  transform: scale(0.98);
 }
 
 .cardKicker {
