@@ -78,6 +78,7 @@ That runs every scenario in your `.autodemo.yml` headlessly, converts videos wit
 
 ## Notes
 
+- **`@v0` vs npm versions** — `uses: praveen-palanisamy/autodemo@v0` resolves the **git tag** `v0` (floating major pointer to the latest stable release). It is unrelated to npm publish tags. Pin a specific release with `@v0.1.1` or a commit SHA. npm packages are published only on semver tags like `v0.1.1` (`@praveen-palanisamy/autodemo`).
 - The action installs its own Bun runtime, Playwright Chromium, and ffmpeg on the runner.
 - Authenticated demos: restore an `auth.statePath` file from a secret/cache before the action step, or run a `login` scenario first (see `docs/CONFIG.md`).
 - AI (`act`) steps need an LLM key in `env`; deterministic scenarios need none.

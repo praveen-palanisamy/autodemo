@@ -3,6 +3,7 @@
 ## v0.1.1 — npm scoped package + CI reliability
 
 - **npm**: publish as `@praveen-palanisamy/autodemo` (unscoped `autodemo` blocked by npm similarity policy). CLI command remains `autodemo`.
+- **npm publish**: semver git tags only (`v0.1.1`); floating `v0` tag is for the GitHub Action, not npm. Trusted Publishing (OIDC) — no `NPM_TOKEN` required when configured on npmjs.
 - **CI**: fix infinite hang when `waitForSelector` omits `timeoutMs` (Playwright treats `undefined` as no timeout).
 - **CI**: action smoke test runs only `site-landing` (walkthrough scenario needs a two-pass site build).
 - **Branding**: walkthrough footer links product site + npm package; optional video watermark when `output.branding` is enabled.

@@ -1,13 +1,17 @@
 name: publish-npm
 
+# Publishes semver git tags only (v0.1.1, v0.2.0, …).
+# The floating git tag `v0` is for the GitHub Action (`uses: …/autodemo@v0`) and
+# must NOT trigger npm publish — it points at the same commit as the latest release.
+
 on:
   push:
     tags:
-      - "v*"
+      - "v[0-9]+.[0-9]+.[0-9]+"
   workflow_dispatch:
     inputs:
       ref:
-        description: "Git ref to publish (tag or branch). Default: v0.1.1"
+        description: "Git ref to publish (semver tag or branch). Default: v0.1.1"
         required: false
         default: "v0.1.1"
       dry_run:
@@ -17,6 +21,7 @@ on:
 
 permissions:
   contents: read
+  id-token: write # npm Trusted Publishers (OIDC)
 
 jobs:
   publish:
@@ -46,10 +51,15 @@ jobs:
 
       - name: Publish to npm
         run: |
+          set -euo pipefail
+          # setup-node writes //registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN} which
+          # blocks OIDC when NODE_AUTH_TOKEN is unset. Trusted Publishing needs OIDC.
+          NPMRC="${NPM_CONFIG_USERCONFIG:-$HOME/.npmrc}"
+          if [ -f "$NPMRC" ]; then
+            sed -i '/_authToken/d' "$NPMRC"
+          fi
           if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dry_run }}" = "true" ]; then
             npm publish --dry-run
           else
             npm publish
           fi
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
