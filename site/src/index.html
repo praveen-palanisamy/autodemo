@@ -65,9 +65,9 @@
           controls
           muted
           playsinline
-          preload="metadata"
-          poster="./demos/site-landing/latest/steps/0001.png"
-          src="./demos/site-landing/latest/video.mp4"
+          preload="none"
+          poster="./demos/site-landing/latest/frames/0000.png"
+          data-src="./demos/site-landing/latest/video.mp4"
         ></video>
         <p class="muted small">
           Every deploy of this page re-records its own demo. That is the whole point:
@@ -253,6 +253,17 @@ autodemo demo "Show the signup flow" --url http://localhost:3000
       video.addEventListener("error", () => {
         document.getElementById("video").style.display = "none";
       }, true);
+      // Load demo MP4 only when the user presses play (keeps autodemo captures clean).
+      const demoVideo = document.getElementById("demo-video");
+      if (demoVideo instanceof HTMLVideoElement) {
+        demoVideo.addEventListener("play", () => {
+          const src = demoVideo.dataset.src;
+          if (src && !demoVideo.getAttribute("src")) {
+            demoVideo.setAttribute("src", src);
+            demoVideo.load();
+          }
+        });
+      }
     </script>
   </body>
 </html>

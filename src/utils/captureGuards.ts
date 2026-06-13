@@ -18,6 +18,34 @@ const DEV_OVERLAY_STYLE = `
   }
 `;
 
+/** Pause embedded <video> and show poster only — avoids nested demo videos in captures. */
+const HOLD_EMBEDDED_VIDEO_SCRIPT = `
+(function() {
+  function holdEmbeddedVideos() {
+    for (const video of document.querySelectorAll("video")) {
+      try {
+        video.pause();
+        if (video.dataset.autodemoAllowPlayback === "true") continue;
+        const poster = video.getAttribute("poster");
+        if (video.getAttribute("src")) {
+          if (!video.dataset.autodemoOriginalSrc) {
+            video.dataset.autodemoOriginalSrc = video.getAttribute("src") || "";
+          }
+          video.removeAttribute("src");
+          video.load();
+        }
+        if (poster) video.setAttribute("poster", poster);
+      } catch {
+        // ignore per-element failures
+      }
+    }
+  }
+  holdEmbeddedVideos();
+  document.addEventListener("DOMContentLoaded", holdEmbeddedVideos, { once: true });
+  window.addEventListener("load", holdEmbeddedVideos, { once: true });
+})();
+`;
+
 const SCRIPT = `
 (function() {
   function installAutodemoCaptureGuards() {
@@ -36,12 +64,22 @@ const SCRIPT = `
 })();
 `;
 
-export async function installCaptureGuards(page: Page): Promise<void> {
+export async function installCaptureGuards(
+  page: Page,
+  opts?: { holdEmbeddedVideos?: boolean },
+): Promise<void> {
   await page.addInitScript(SCRIPT);
   await page.evaluate(SCRIPT).catch(() => {});
+  if (opts?.holdEmbeddedVideos) {
+    await page.addInitScript(HOLD_EMBEDDED_VIDEO_SCRIPT);
+    await page.evaluate(HOLD_EMBEDDED_VIDEO_SCRIPT).catch(() => {});
+  }
   page.on("framenavigated", async (frame) => {
     if (frame === page.mainFrame()) {
       await page.evaluate(SCRIPT).catch(() => {});
+      if (opts?.holdEmbeddedVideos) {
+        await page.evaluate(HOLD_EMBEDDED_VIDEO_SCRIPT).catch(() => {});
+      }
     }
   });
 }

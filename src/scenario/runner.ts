@@ -13,10 +13,14 @@ import { executeStagehandStep } from "../engines/stagehand/execute.ts";
 import type { RunJson, RunJsonAsset, RunJsonStep, RunStatus } from "../output/types.ts";
 import { scenarioLatestDir, stepScreenshotPath, stepsDir } from "../output/paths.ts";
 import { writeInteractiveHtml, writeRunJson } from "../output/writeArtifacts.ts";
-import { convertWebmToMp4, isFfmpegAvailable } from "../output/video.ts";
+import { convertWebmToMp4, assembleMp4FromFrames, isFfmpegAvailable, type VideoFrame } from "../output/video.ts";
 import { ensureDir, rmrf } from "../utils/fs.ts";
 import { installCursorOverlay } from "../utils/cursorOverlay.ts";
 import { installCaptureGuards } from "../utils/captureGuards.ts";
+import {
+  resolveRecordVideoSize,
+  stabilizePageForVideoCapture,
+} from "../utils/videoCapture.ts";
 import { appendFile } from "node:fs/promises";
 import { mkdir } from "node:fs/promises";
 
@@ -173,6 +177,13 @@ export async function runScenario(opts: RunScenarioOpts): Promise<RunScenarioRes
       : undefined;
 
   const headless = opts.headless ?? opts.config.browser.headless;
+  const viewport = opts.config.browser.viewport;
+  const recordVideo = opts.config.browser.recordVideo;
+  const videoSource = opts.config.browser.video?.source ?? "frames";
+  const usePlaywrightRecorder = recordVideo && videoSource === "playwright";
+  const recordVideoSize = usePlaywrightRecorder
+    ? resolveRecordVideoSize(viewport, opts.config.browser.video?.recordSize)
+    : undefined;
   const storageStatePath = opts.config.auth.statePath
     ? resolveCwdPath(opts.config.auth.statePath)
     : undefined;
@@ -200,15 +211,21 @@ export async function runScenario(opts: RunScenarioOpts): Promise<RunScenarioRes
     : await createPlaywrightSession({
         outDir,
         headless,
-        viewport: opts.config.browser.viewport,
-        recordVideoSize: opts.config.browser.video?.recordSize,
-        recordVideo: opts.config.browser.recordVideo,
+        viewport,
+        recordVideoSize,
+        recordVideo: usePlaywrightRecorder,
         enableTracing: true, // needed to export trace on failure
         storageStatePath,
       });
 
   if (opts.config.browser.capture?.hideDevOverlays ?? true) {
-    await installCaptureGuards(session.page).catch(() => {});
+    await installCaptureGuards(session.page, { holdEmbeddedVideos: recordVideo }).catch(
+      () => {},
+    );
+  }
+
+  if (recordVideo) {
+    await stabilizePageForVideoCapture(session.page).catch(() => {});
   }
 
   // Ensure cursor is visible in videos/screenshots and highlight clicks.
@@ -255,6 +272,9 @@ export async function runScenario(opts: RunScenarioOpts): Promise<RunScenarioRes
       `[${new Date().toISOString()}] PAGEERROR ${err.message}\n${err.stack ?? ""}\n`,
     ).catch(() => {});
   });
+
+  const videoFrames: VideoFrame[] = [];
+  const lastStepIndex = scenario.steps.length - 1;
 
   for (let i = 0; i < scenario.steps.length; i++) {
     const step = scenario.steps[i] as ScenarioStep;
@@ -316,6 +336,17 @@ export async function runScenario(opts: RunScenarioOpts): Promise<RunScenarioRes
 
       if (transitionMs > 0) {
         await session.page.waitForTimeout(transitionMs);
+      }
+
+      if (recordVideo && videoSource === "frames") {
+        const frameRel = path.join("frames", `${String(i).padStart(4, "0")}.png`);
+        const frameAbs = path.join(outDir, frameRel);
+        await ensureDir(path.dirname(frameAbs));
+        await session.page.screenshot({ path: frameAbs, fullPage: false });
+        videoFrames.push({
+          path: frameAbs,
+          durationMs: transitionMs + (i === lastStepIndex ? endPauseMs : 0),
+        });
       }
 
       const stepFinishedMs = Date.now();
@@ -413,7 +444,7 @@ export async function runScenario(opts: RunScenarioOpts): Promise<RunScenarioRes
     }
   }
 
-  if (endPauseMs > 0) {
+  if (endPauseMs > 0 && !(recordVideo && videoSource === "frames")) {
     try {
       await session.page.waitForTimeout(endPauseMs);
     } catch {
@@ -429,7 +460,30 @@ export async function runScenario(opts: RunScenarioOpts): Promise<RunScenarioRes
     await closeStagehandSession(stagehandSession).catch(() => {});
   }
   let videoMp4PathRel: string | undefined;
-  if (videoWebmPath) {
+  if (recordVideo && videoSource === "frames" && videoFrames.length > 0) {
+    try {
+      if (await isFfmpegAvailable()) {
+        const frames =
+          scenario.videoStartStep !== undefined
+            ? videoFrames.slice(scenario.videoStartStep)
+            : videoFrames;
+        if (frames.length > 0) {
+          const mp4Abs = path.join(outDir, "video.mp4");
+          await assembleMp4FromFrames({
+            frames,
+            outputMp4: mp4Abs,
+            width: viewport.width,
+            height: viewport.height,
+            fps: 30,
+            logPath,
+          });
+          videoMp4PathRel = "video.mp4";
+        }
+      }
+    } catch {
+      // ignore
+    }
+  } else if (videoWebmPath) {
     // Keep artifact stable by copying/renaming to outDir even if Playwright stores elsewhere.
     try {
       const webmAbs = path.join(outDir, "video.webm");
@@ -441,8 +495,8 @@ export async function runScenario(opts: RunScenarioOpts): Promise<RunScenarioRes
           inputWebm: webmAbs,
           outputMp4: mp4Abs,
           logPath,
-          width: opts.config.browser.viewport.width,
-          height: opts.config.browser.viewport.height,
+          width: viewport.width,
+          height: viewport.height,
           fps: 30,
           startMs: videoStartOffsetMs,
         });

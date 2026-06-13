@@ -55,9 +55,7 @@ browser:
     # Hide framework/debug overlays such as Next.js dev indicators in demos.
     hideDevOverlays: true
   video:
-    # Stable raw Playwright recording surface. Final MP4 is normalized to browser.viewport.
-    recordSize: { width: 1280, height: 720 }
-    # When a scenario sets videoStartStep, keep this much lead-in before that step.
+    # Optional: must match browser.viewport if set. Otherwise recordVideo uses viewport.
     trimStartBeforeMs: 600
 
 # Optional Playwright storage state for authenticated demos.

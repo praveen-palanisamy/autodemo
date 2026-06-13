@@ -196,10 +196,15 @@ const CaptureSchema = z.object({
 
 const VideoSchema = z.object({
   /**
-   * Playwright's raw video recorder is most stable at conventional 16:9 video
-   * surfaces. The final MP4 is still normalized to the configured viewport size.
+   * Playwright recordVideo.size. Defaults to browser.viewport at runtime so capture
+   * dimensions stay locked (mismatched sizes cause gray letterboxing + jitter).
    */
-  recordSize: ViewportSchema.default({ width: 1280, height: 720 }),
+  recordSize: ViewportSchema.optional(),
+  /**
+   * `frames`: assemble MP4 from per-step viewport PNGs (stable during scroll).
+   * `playwright`: use Playwright recordVideo WebM (legacy; can glitch while scrolling).
+   */
+  source: z.enum(["frames", "playwright"]).default("frames"),
   /**
    * Keep a small lead-in before a scenario's videoStartStep when trimming setup frames.
    */

@@ -31,7 +31,7 @@ export function defaultConfig(): Record<string, unknown> {
         hideDevOverlays: true,
       },
       video: {
-        recordSize: { width: 1280, height: 720 },
+        // source: "frames" (default) | "playwright"
         trimStartBeforeMs: 600,
       },
     },

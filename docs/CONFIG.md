@@ -30,7 +30,7 @@ browser:
   capture:
     hideDevOverlays: true # hide Next.js/Vite/Webpack dev overlays in product demos
   video:
-    recordSize: { width: 1280, height: 720 } # stable raw recorder surface
+    # recordSize defaults to browser.viewport at runtime (keeps every frame full-bleed).
     trimStartBeforeMs: 600
 
 auth:
@@ -196,8 +196,9 @@ AutoDemo intentionally waits between steps so screenshots and video feel human-p
 ### Capture quality (`browser.capture` and `browser.video`)
 
 - `browser.capture.hideDevOverlays` defaults to `true`. It hides common framework overlays such as Next.js dev indicators, Vite overlays, and Webpack dev-server overlays. Set it to `false` only when the demo is intentionally documenting a debug workflow.
-- `browser.video.recordSize` defaults to `1280x720`. Playwright’s raw recorder is most stable at a conventional 16:9 surface; AutoDemo then normalizes the final MP4 to `browser.viewport`.
-- `browser.video.trimStartBeforeMs` controls the small lead-in retained before `videoStartStep`.
+- `browser.video.source` defaults to `frames`. AutoDemo captures a **viewport PNG after each step** and assembles `video.mp4` with ffmpeg. This stays stable during scroll (Playwright `recordVideo` can glitch in headless mode). Set `source: playwright` to use the legacy WebM recorder.
+- `browser.video.recordSize` is optional. When omitted (or mismatched with `browser.viewport`), AutoDemo records at the viewport size so Playwright and ffmpeg stay pixel-locked — mismatched sizes cause gray letterboxing and jittery upscale.
+- `browser.video.trimStartBeforeMs` controls the small lead-in retained before `videoStartStep` (frame assembly skips steps before `videoStartStep`).
 
 ### Interactive recording capture (`recording`)
 

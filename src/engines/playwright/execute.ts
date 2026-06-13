@@ -22,7 +22,24 @@ export async function executePlaywrightStep(opts: {
     } catch {
       // Some apps keep streaming work alive; a short visual settle is still useful for video.
     }
-    await wait(250);
+    try {
+      await page.waitForLoadState("networkidle", { timeout: 6_000 });
+    } catch {
+      // ignore
+    }
+    try {
+      await page.evaluate(async () => {
+        try {
+          await document.fonts?.ready;
+        } catch {
+          // ignore
+        }
+        await new Promise<void>((r) => requestAnimationFrame(() => r()));
+      });
+    } catch {
+      // ignore
+    }
+    await wait(300);
   }
 
   async function moveCursor(x: number, y: number, highlight: boolean) {
@@ -176,18 +193,18 @@ export async function executePlaywrightStep(opts: {
       return;
     }
     case "scrollIntoView": {
-      await locatorFor(step.selector).scrollIntoViewIfNeeded();
+      const behavior = step.behavior ?? "auto";
       await page.evaluate(
         ({ selector, behavior, block }) => {
           document.querySelector(selector)?.scrollIntoView({ behavior, block });
         },
         {
           selector: step.selector,
-          behavior: step.behavior ?? "smooth",
-          block: step.block ?? "center",
+          behavior,
+          block: step.block ?? "start",
         },
       );
-      await wait((step.behavior ?? "smooth") === "smooth" ? 1000 : 220);
+      await wait(behavior === "smooth" ? 1000 : 350);
       return;
     }
     case "narrate": {

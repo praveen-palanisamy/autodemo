@@ -20,40 +20,49 @@ browser:
   transitions:
     transitionMs: 700
     endPauseMs: 1200
+  video:
+    source: frames
+    trimStartBeforeMs: 800
 
 scenarios:
   site-landing:
-    description: "AutoDemo product page: tour the landing page and open a generated walkthrough"
+    description: "AutoDemo product page: tour the landing page"
+    videoStartStep: 1
     steps:
       - type: goto
         url: /
         note: "Open the AutoDemo product page"
+      - type: sleep
+        ms: 400
+        note: "Let layout and fonts settle before scrolling"
       - type: scrollIntoView
         selector: "[data-testid=section-how]"
-        behavior: smooth
+        behavior: auto
         note: "How it works: describe → run → ship"
       - type: scrollIntoView
         selector: "[data-testid=section-features]"
-        behavior: smooth
+        behavior: auto
         note: "Built for humans and AI agents"
       - type: scrollIntoView
         selector: "[data-testid=section-code]"
-        behavior: smooth
+        behavior: auto
         note: "Scenarios are code, versioned in git"
       - type: scrollIntoView
+        selector: "[data-testid=section-compare]"
+        behavior: auto
+        note: "Why not a demo SaaS or screen recorder?"
+      - type: scrollIntoView
         selector: "[data-testid=section-start]"
-        behavior: smooth
+        behavior: auto
         note: "Get started in 60 seconds"
       - type: scrollTo
         y: 0
-        behavior: smooth
+        behavior: auto
         note: "Back to the top"
       - type: sleep
-        ms: 600
+        ms: 800
         note: "Pause for the video tail"
 
-  # Runs in a second pass (after site-landing artifacts are embedded in the site),
-  # so the walkthrough it opens is the one generated moments earlier. Dogfooding.
   site-walkthrough:
     description: "Step through an interactive walkthrough that AutoDemo generated"
     steps:

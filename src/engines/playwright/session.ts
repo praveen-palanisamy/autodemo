@@ -32,6 +32,7 @@ export async function createPlaywrightSession(
 
   const context = await browser.newContext({
     viewport: opts.viewport,
+    deviceScaleFactor: 1,
     ...(opts.storageStatePath && existsSync(opts.storageStatePath)
       ? { storageState: opts.storageStatePath }
       : {}),
@@ -50,6 +51,12 @@ export async function createPlaywrightSession(
   }
 
   const page = await context.newPage();
+  // Reinforce viewport after page creation (headless recorders can emit odd first frames).
+  try {
+    await page.setViewportSize(opts.viewport);
+  } catch {
+    // ignore
+  }
   const video = page.video?.() ?? null;
 
   return { browser, context, page, video, videoDir };
