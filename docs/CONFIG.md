@@ -101,6 +101,7 @@ Common optional fields:
 
 Scenario optional fields:
 
+- `internal`: when `true`, the scenario is skipped by `autodemo run --all` (use for login/bootstrap flows). You can still run it by name. Also skippable via `--exclude name1,name2`.
 - `videoStartStep`: trims the final MP4 so it starts shortly before this step. Use it to remove login/auth setup, page-load spinners, or first-run framework noise while preserving the deterministic setup steps.
 
 ### LLM providers (`llm`) — for AI `act` steps
