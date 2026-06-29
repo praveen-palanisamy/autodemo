@@ -234,6 +234,8 @@ export type ScenarioStep = z.infer<typeof ScenarioStepSchema>;
 
 export const ScenarioSchema = z.object({
   description: z.string().optional(),
+  /** When true, skipped by `autodemo run --all` (bootstrap/login scenarios). */
+  internal: z.boolean().default(false).optional(),
   videoStartStep: z.number().int().nonnegative().optional(),
   story: z
     .object({

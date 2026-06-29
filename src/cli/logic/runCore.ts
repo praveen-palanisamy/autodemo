@@ -22,9 +22,17 @@ export async function runCore(parsed: ParsedCli): Promise<RunCoreResult> {
   const all = popFlag(argv, "--all");
   const urlOverride = popOption(argv, "--url");
   const outDirOverride = popOption(argv, "--outDir");
+  const excludeRaw = popOption(argv, "--exclude");
   const forceHeadless = popFlag(argv, "--headless");
   const debug = popFlag(argv, "--debug");
   const noBranding = popFlag(argv, "--no-branding");
+
+  const excludeNames = new Set(
+    (excludeRaw ?? "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean),
+  );
 
   let scenarioName = all ? undefined : argv[0];
   if (scenarioName === "scenario") scenarioName = argv[1];
@@ -50,7 +58,11 @@ export async function runCore(parsed: ParsedCli): Promise<RunCoreResult> {
       ? config.output.dir
       : path.join(parsed.global.cwd, config.output.dir);
 
-  const scenarioNames = all ? Object.keys(config.scenarios) : [scenarioName!];
+  const scenarioNames = (all ? Object.keys(config.scenarios) : [scenarioName!]).filter((name) => {
+    if (excludeNames.has(name)) return false;
+    if (all && config.scenarios[name]?.internal) return false;
+    return true;
+  });
   if (scenarioNames.length === 0) throw new Error("No scenarios found in config.");
 
   const results: RunCoreResult["results"] = [];

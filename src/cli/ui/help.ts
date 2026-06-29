@@ -8,7 +8,7 @@ export function printHelp(parsed: ParsedCli): void {
       ? [
           "Run:",
           "  autodemo run <scenario> [--url <url>] [--headless] [--config <path>]",
-          "  autodemo run --all [--url <url>] [--headless] [--config <path>]",
+          "  autodemo run --all [--url <url>] [--headless] [--exclude a,b] [--config <path>]",
           "  autodemo run --interactive   # run wizard (pick config/scenario/url)",
           "",
         ]
@@ -61,6 +61,7 @@ export function printHelp(parsed: ParsedCli): void {
     "  --url <url>        Override baseUrl",
     "  --outDir <dir>     Override output dir (default: config output.dir)",
     "  --headless         Run browser headless (default: headed)",
+    "  --exclude <names>  Comma-separated scenario names to skip with --all",
     "  --interactive      Launch run wizard (pick config + scenario + url)",
     "  --debug            Save trace.zip even on success",
     "",
