@@ -65,7 +65,6 @@ async function main(): Promise<void> {
         baseUrl,
         "--headless",
         "--no-tui",
-        "--debug",
       ]);
     } finally {
       try {

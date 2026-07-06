@@ -20,13 +20,14 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
 
       - uses: oven-sh/setup-bun@v2
         with:
@@ -47,11 +48,32 @@ jobs:
       - name: Build site (includes generated demos)
         run: bun run site:build
 
+      - name: Normalize artifact permissions
+        run: chmod -R a+rX site/dist
+
       - uses: actions/configure-pages@v5
 
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v4
         with:
           path: site/dist
 
-      - id: deployment
-        uses: actions/deploy-pages@v4
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages (attempt 1)
+        id: deployment
+        uses: actions/deploy-pages@v5
+        continue-on-error: true
+
+      - name: Deploy to GitHub Pages (attempt 2)
+        if: steps.deployment.outcome == 'failure'
+        id: deployment_retry
+        uses: actions/deploy-pages@v5
+
+      - name: Fail if all deploy attempts failed
+        if: steps.deployment.outcome == 'failure' && steps.deployment_retry.outcome != 'success'
+        run: exit 1
