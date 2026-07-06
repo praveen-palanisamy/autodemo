@@ -32,6 +32,9 @@ jobs:
       - name: Unit tests
         run: bun run test:unit
 
+      - name: Validate action.yml (Marketplace)
+        run: bun run validate:action
+
       - name: Installer script check
         run: bash -n install.sh
 
