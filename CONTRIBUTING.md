@@ -10,6 +10,7 @@ cd autodemo
 bun install
 bun run playwright:install   # one-time browser download
 bun run setup:completions    # optional: `bun run <tab>` script names in bash
+bun run setup:hooks          # pre-commit: lint + typecheck + unit tests (matches CI)
 
 # Sanity check
 bun run doctor
