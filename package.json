@@ -47,6 +47,8 @@
     "demos:update": "bun run scripts/updateSiteDemos.ts",
     "release:prepare": "bun run scripts/release.ts",
     "setup:completions": "bun run scripts/installShellCompletion.ts",
+    "setup:hooks": "bun run scripts/setupGitHooks.ts",
+    "ci:check": "bun run scripts/preCommitCheck.ts",
     "doctor": "bun run ./bin/autodemo.ts doctor --no-tui",
     "mcp": "bun run ./bin/autodemo.ts mcp --no-tui",
     "e2e": "bun run test:integration"

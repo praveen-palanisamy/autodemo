@@ -1,3 +1,19 @@
+## Fast pre-push check (matches CI `test` job)
+
+Before pushing, run the same gates as the CI lint/typecheck/unit job:
+
+```bash
+bun run ci:check
+```
+
+Enable the git pre-commit hook once per clone (runs `ci:check` automatically):
+
+```bash
+bun run setup:hooks
+```
+
+Integration and action-smoke jobs are heavier; run them with `bun run test:integration` or `act` when you touch runner/site/action code.
+
 ## Running CI locally (act + Podman)
 
 AutoDemo ships GitHub Actions workflows under `.github/workflows/`.
