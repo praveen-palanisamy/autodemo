@@ -3,6 +3,7 @@ import path from "node:path";
 import type { ParsedCli } from "../parse.ts";
 import { popFlag, popOption } from "../argUtils.ts";
 import { loadConfig } from "../../config/loadConfig.ts";
+import type { AutoDemoConfig } from "../../config/schema.ts";
 import { runScenario } from "../../scenario/runner.ts";
 import type { ScenarioArtifacts } from "../../scenario/runner.ts";
 
@@ -16,6 +17,21 @@ export type RunCoreResult = {
   }[];
   anyFailure: boolean;
 };
+
+/** Resolves scenario names for `run --all`, `--exclude`, and `internal` flags. */
+export function filterScenarioNamesForRun(
+  scenarios: AutoDemoConfig["scenarios"],
+  all: boolean,
+  scenarioName: string | undefined,
+  excludeNames: Set<string>,
+): string[] {
+  const names = all ? Object.keys(scenarios) : scenarioName ? [scenarioName] : [];
+  return names.filter((name) => {
+    if (excludeNames.has(name)) return false;
+    if (all && scenarios[name]?.internal) return false;
+    return true;
+  });
+}
 
 export async function runCore(parsed: ParsedCli): Promise<RunCoreResult> {
   const argv = [...parsed.args];
@@ -58,11 +74,12 @@ export async function runCore(parsed: ParsedCli): Promise<RunCoreResult> {
       ? config.output.dir
       : path.join(parsed.global.cwd, config.output.dir);
 
-  const scenarioNames = (all ? Object.keys(config.scenarios) : [scenarioName!]).filter((name) => {
-    if (excludeNames.has(name)) return false;
-    if (all && config.scenarios[name]?.internal) return false;
-    return true;
-  });
+  const scenarioNames = filterScenarioNamesForRun(
+    config.scenarios,
+    all,
+    scenarioName,
+    excludeNames,
+  );
   if (scenarioNames.length === 0) throw new Error("No scenarios found in config.");
 
   const results: RunCoreResult["results"] = [];

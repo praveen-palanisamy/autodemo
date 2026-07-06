@@ -9,6 +9,7 @@ git clone https://github.com/praveen-palanisamy/autodemo.git
 cd autodemo
 bun install
 bun run playwright:install   # one-time browser download
+bun run setup:completions    # optional: `bun run <tab>` script names in bash
 
 # Sanity check
 bun run doctor
