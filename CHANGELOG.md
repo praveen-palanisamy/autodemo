@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.2.0 — Internal scenarios, CI gates, Pages reliability
+
+- **Scenarios**: `internal: true` skips bootstrap/login flows from `autodemo run --all`; still runnable by name. `--exclude name1,name2` omits named scenarios from `--all`.
+- **Developer UX**: `bun run setup:hooks` installs pre-commit checks (`ci:check` = lint + typecheck + unit tests). `bun run setup:completions` fixes `bun run <tab>` script completion in bash.
+- **Pages deploy**: split build/deploy jobs, upgrade to `actions/checkout@v5` / `upload-pages-artifact@v4` / `deploy-pages@v5`, add `.nojekyll`, strip debug demo artifacts (`trace.zip`, etc.), retry transient deploy failures.
+- **CI**: Node.js 22 LTS across workflows (drops Node 20 deprecation warnings). `release-on-green` updates floating `v0` tag and drafts semver releases when CI passes on `main`.
+
 ## v0.1.1 — npm scoped package + CI reliability
 
 - **npm**: publish as `@praveen-palanisamy/autodemo` (unscoped `autodemo` blocked by npm similarity policy). CLI command remains `autodemo`.

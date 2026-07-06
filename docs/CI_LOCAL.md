@@ -14,6 +14,8 @@ bun run setup:hooks
 
 Integration and action-smoke jobs are heavier; run them with `bun run test:integration` or `act` when you touch runner/site/action code.
 
+After CI passes on `main`, the `release-on-green` workflow updates the floating `v0` GitHub Action tag and drafts a semver release when `package.json` has no matching tag yet. Publish the draft from [Releases](https://github.com/praveen-palanisamy/autodemo/releases) (enable **Publish to GitHub Marketplace** for the Action).
+
 ## Running CI locally (act + Podman)
 
 AutoDemo ships GitHub Actions workflows under `.github/workflows/`.

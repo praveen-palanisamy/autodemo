@@ -1,0 +1,58 @@
+name: release-on-green
+
+# After CI passes on main: keep the floating GitHub Action tag (`v0`) current and
+# draft a semver GitHub Release when package.json has no matching tag yet.
+
+on:
+  workflow_run:
+    workflows: [ci]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  tag-and-draft:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install
+        run: bun install --frozen-lockfile
+
+      - name: Update floating v0 tag (GitHub Action marketplace)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -f v0 "${{ github.event.workflow_run.head_sha }}"
+          git push origin refs/tags/v0 --force
+
+      - name: Draft semver release when tag is missing
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION=$(bun -e "import p from './package.json' with { type: 'json' }; process.stdout.write(p.version)")
+          TAG="v${VERSION}"
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "Tag ${TAG} already exists — skipping draft release."
+            exit 0
+          fi
+          git tag "$TAG" "${{ github.event.workflow_run.head_sha }}"
+          git push origin "$TAG"
+          gh release create "$TAG" \
+            --draft \
+            --title "AutoDemo v${VERSION}" \
+            --generate-notes
