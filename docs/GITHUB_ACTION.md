@@ -2,6 +2,12 @@
 
 Regenerate demos in CI on every merge — so they can never go stale.
 
+**Marketplace listing name:** `AutoDemo Demos-as-Code` (in `action.yml`). Consumers still reference the repo slug:
+
+```yaml
+uses: praveen-palanisamy/autodemo@v0
+```
+
 ## Quick start
 
 ```yaml
@@ -15,7 +21,7 @@ jobs:
   demos:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       # Start your app however you normally do.
       - run: npm ci && npm run build && (npm run start &)
@@ -78,7 +84,8 @@ That runs every scenario in your `.autodemo.yml` headlessly, converts videos wit
 
 ## Notes
 
-- **`@v0` vs npm versions** — `uses: praveen-palanisamy/autodemo@v0` resolves the **git tag** `v0` (floating major pointer to the latest stable release). It is unrelated to npm publish tags. Pin a specific release with `@v0.1.1` or a commit SHA. npm packages are published only on semver tags like `v0.1.1` (`@praveen-palanisamy/autodemo`).
+- **Marketplace publish** — `action.yml` `name` must be globally unique (not `AutoDemo` alone) and `description` ≤ 125 characters. Run `bun run validate:action` before publishing.
+- **`@v0` vs npm versions** — `uses: praveen-palanisamy/autodemo@v0` resolves the **git tag** `v0` (floating major pointer to the latest stable release). It is unrelated to npm publish tags. Pin a specific release with `@v0.2.0` or a commit SHA. npm packages are published only on semver tags like `v0.2.0` (`@praveen-palanisamy/autodemo`).
 - The action installs its own Bun runtime, Playwright Chromium, and ffmpeg on the runner.
 - Authenticated demos: restore an `auth.statePath` file from a secret/cache before the action step, or run a `login` scenario first (see `docs/CONFIG.md`).
 - AI (`act`) steps need an LLM key in `env`; deterministic scenarios need none.

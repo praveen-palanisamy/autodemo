@@ -24,6 +24,7 @@ async function runStep(label: string, cmd: string[]): Promise<void> {
 await runStep("lint", ["bun", "run", "lint"]);
 await runStep("typecheck", ["bun", "run", "typecheck"]);
 await runStep("unit tests", ["bun", "run", "test:unit"]);
+await runStep("action.yml marketplace", ["bun", "run", "validate:action"]);
 await runStep("install.sh syntax", ["bash", "-n", "install.sh"]);
 
 console.log("\nAll pre-commit checks passed (CI test job).");

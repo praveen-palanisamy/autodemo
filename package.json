@@ -49,6 +49,7 @@
     "setup:completions": "bun run scripts/installShellCompletion.ts",
     "setup:hooks": "bun run scripts/setupGitHooks.ts",
     "ci:check": "bun run scripts/preCommitCheck.ts",
+    "validate:action": "bun run scripts/validateActionManifest.ts",
     "doctor": "bun run ./bin/autodemo.ts doctor --no-tui",
     "mcp": "bun run ./bin/autodemo.ts mcp --no-tui",
     "e2e": "bun run test:integration"

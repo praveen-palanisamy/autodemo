@@ -1,7 +1,6 @@
-name: "AutoDemo"
+name: "AutoDemo Demos-as-Code"
 description: >-
-  Generate demo videos, interactive walkthroughs, and marketing captures from a
-  running web app. Demos as code: deterministic YAML scenarios or AI instructions.
+  Demos as code: record video, interactive walkthroughs, and marketing captures from a running web app in CI.
 author: "Praveen Palanisamy"
 branding:
   icon: "film"
