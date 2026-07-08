@@ -69,6 +69,32 @@ function titleCardHtml(opts: TitleCardOpts, logoSrc?: string): string {
 }
 
 /**
+ * Rasterize a logo (including SVG, which ffmpeg cannot decode) to a
+ * transparent PNG using the live browser page. Must run before the Playwright
+ * session closes.
+ */
+export async function rasterizeLogoPng(opts: {
+  page: Page;
+  logoPath: string;
+  outPath: string;
+  widthPx: number;
+}): Promise<boolean> {
+  const src = await logoDataUri(opts.logoPath);
+  if (!src) return false;
+  await opts.page.setContent(
+    `<!doctype html><html><head><style>
+      html, body { margin: 0; padding: 0; background: transparent; }
+      img { display: block; width: ${opts.widthPx}px; height: auto; }
+    </style></head><body><img id="logo" src="${src}"></body></html>`,
+    { waitUntil: "load" },
+  );
+  await opts.page
+    .locator("#logo")
+    .screenshot({ path: opts.outPath, omitBackground: true });
+  return true;
+}
+
+/**
  * Render a title card as a viewport-sized PNG using the live browser page.
  * Must run before the Playwright session closes; the page is navigated away
  * from the app, so only call after all scenario steps have executed.

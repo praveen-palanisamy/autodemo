@@ -238,7 +238,7 @@ Put *your* brand on generated videos (licensed use — this is independent of th
 ```yaml
 output:
   brand:
-    logoPath: public/brand/logo.png # watermarked onto the video via ffmpeg
+    logoPath: public/brand/logo.svg # PNG/JPEG/WebP/SVG (SVG is rasterized in-browser)
     logoPosition: bottom-right # top-left | top-right | bottom-left | bottom-right
     logoWidthPx: 120
     introCard: true # title card rendered from scenario.story (title/goal/persona)

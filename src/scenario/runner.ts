@@ -16,7 +16,7 @@ import { writeInteractiveHtml, writeRunJson } from "../output/writeArtifacts.ts"
 import { convertWebmToMp4, assembleMp4FromFrames, isFfmpegAvailable, type VideoFrame } from "../output/video.ts";
 import { buildFrameCaptionCues, buildStepCaptionCues, type CaptionCue } from "../output/captions.ts";
 import { postProcessVideo, type PostProcessResult } from "../output/postProcess.ts";
-import { renderTitleCardPng } from "../branding/titleCards.ts";
+import { renderTitleCardPng, rasterizeLogoPng } from "../branding/titleCards.ts";
 import { ensureDir, rmrf } from "../utils/fs.ts";
 import { installCursorOverlay } from "../utils/cursorOverlay.ts";
 import { installCaptureGuards } from "../utils/captureGuards.ts";
@@ -472,6 +472,35 @@ export async function runScenario(opts: RunScenarioOpts): Promise<RunScenarioRes
   const cardDurationMs = brandCfg?.cardDurationMs ?? 2200;
   let introFrame: VideoFrame | undefined;
   let outroFrame: VideoFrame | undefined;
+
+  // ffmpeg cannot decode SVG, so rasterize vector logos to PNG in the browser
+  // before the session closes; the raster feeds the video logo overlay.
+  let overlayLogoPath = brandCfg?.logoPath ? resolveCwdPath(brandCfg.logoPath) : undefined;
+  if (
+    status === "success" &&
+    recordVideo &&
+    overlayLogoPath &&
+    path.extname(overlayLogoPath).toLowerCase() === ".svg"
+  ) {
+    try {
+      const rasterAbs = path.join(outDir, "frames", "logo.png");
+      await ensureDir(path.dirname(rasterAbs));
+      const ok = await rasterizeLogoPng({
+        page: session.page,
+        logoPath: overlayLogoPath,
+        outPath: rasterAbs,
+        widthPx: (brandCfg?.logoWidthPx ?? 120) * 2,
+      });
+      overlayLogoPath = ok ? rasterAbs : undefined;
+    } catch (err) {
+      overlayLogoPath = undefined;
+      await appendFile(
+        logPath,
+        `[${new Date().toISOString()}] logo rasterization failed: ${err instanceof Error ? err.message : err}\n`,
+      ).catch(() => {});
+    }
+  }
+
   if (
     status === "success" &&
     recordVideo &&
@@ -603,7 +632,7 @@ export async function runScenario(opts: RunScenarioOpts): Promise<RunScenarioRes
       masterMp4Abs: path.join(outDir, videoMp4PathRel),
       brand: brandCfg
         ? {
-            logoPath: brandCfg.logoPath,
+            logoPath: overlayLogoPath,
             logoPosition: brandCfg.logoPosition,
             logoWidthPx: brandCfg.logoWidthPx,
           }

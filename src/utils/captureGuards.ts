@@ -10,7 +10,8 @@ const DEV_OVERLAY_STYLE = `
   [data-nextjs-dev-tools-panel],
   [data-vite-dev-id],
   #webpack-dev-server-client-overlay,
-  iframe[src*="webpack-dev-server"] {
+  iframe[src*="webpack-dev-server"],
+  .firebase-emulator-warning {
     display: none !important;
     visibility: hidden !important;
     opacity: 0 !important;
