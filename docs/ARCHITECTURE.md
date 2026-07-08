@@ -16,6 +16,7 @@ flowchart TD
   OUT --> JSON[run.json]
   OUT --> STEPS[steps/*.png]
   OUT --> VID["video.mp4 (optional)"]
+  VID --> POST["Post-process: logo overlay, captions, aspect variants, GIF"]
   OUT --> TRACE["trace.zip (on failure or --debug)"]
 ```
 
@@ -34,6 +35,9 @@ flowchart TD
   - Playwright: `src/engines/playwright/*`
 - **Output**
   - `src/output/*` (interactive HTML, run.json, video conversion)
+  - `src/output/postProcess.ts`: brand logo overlay, caption sidecars/burn-in, aspect-ratio variants, GIF exports
+  - `src/output/derivatives.ts` / `src/output/captions.ts`: ffmpeg derivation + SRT/VTT generation
+  - `src/branding/titleCards.ts`: intro/outro title cards rendered from `story` metadata
 - **Recording (interactive authoring)**
   - `src/recording/recorder.ts`: headed browser + event capture (click/fill/scroll)
   - `src/recording/selector.ts`: human-first selector + step notes

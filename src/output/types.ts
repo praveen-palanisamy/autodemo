@@ -27,6 +27,13 @@ export type RunJsonAsset = {
   fullPage?: boolean;
 };
 
+export type RunJsonVideoVariant = {
+  /** Aspect-ratio preset slug, e.g. "1x1" or "9x16". */
+  aspect: string;
+  mp4Path: string;
+  gifPath?: string;
+};
+
 export type RunJson = {
   project: { name: string; baseUrl: string };
   scenario: { name: string; description?: string };
@@ -39,6 +46,10 @@ export type RunJson = {
     interactiveHtmlPath: string;
     runJsonPath: string;
     videoMp4Path?: string;
+    videoGifPath?: string;
+    videoVariants?: RunJsonVideoVariant[];
+    captionsSrtPath?: string;
+    captionsVttPath?: string;
     traceZipPath?: string;
     ffmpegLogPath?: string;
     assets?: RunJsonAsset[];

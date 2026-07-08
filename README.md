@@ -125,6 +125,9 @@ One-line registration for Cursor / Claude Code / Codex, JSON CLI contracts, and 
 - **Any LLM, or none** — OpenAI, Anthropic, Google, Groq, Ollama/local, any OpenAI-compatible endpoint; deterministic scenarios need zero keys
 - **Authenticated flows** — reusable browser storage state; login once, demo logged-in forever
 - **Marketing-grade output** — dev overlays hidden, loading noise trimmed (`videoStartStep`), named region captures, custom cursor & click highlights
+- **Multi-format export** — GIF + social aspect presets (16:9, 1:1, 9:16) derived from a single run
+- **Brand overlays** — your logo watermark plus intro/outro title cards rendered from scenario `story` metadata
+- **Captions** — SRT/VTT sidecars (and optional burn-in) generated from step notes
 - **Story tools** — on-screen `narrate` beats, per-step notes in walkthroughs
 - **Interactive TUI** — wizards for recording and running (`autodemo record --interactive`)
 - **CI-grade** — `--json` output, stable exit codes, `trace.zip` on failure, artifacts contract in `run.json`

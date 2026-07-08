@@ -216,6 +216,55 @@ When `output.clean: true`, AutoDemo **deletes the previous output folder for the
 
 This keeps `latest/` consistent and avoids stale screenshots/videos lingering between runs.
 
+### Multi-format export (`output.formats`, `output.aspectRatios`)
+
+A single run can emit multiple video formats and social aspect-ratio presets derived from the master `video.mp4`:
+
+```yaml
+output:
+  formats: [mp4, gif] # gif adds video.gif (fps 12, max width 640)
+  aspectRatios: ["1:1", "9:16"] # adds video-1x1.mp4, video-9x16.mp4 (center-cropped)
+```
+
+- The master `video.mp4` always keeps the viewport's native aspect.
+- Aspect variants are center-cropped, so keep the key action near the middle of the viewport when targeting `9:16`.
+- With `gif` enabled, each aspect variant also gets a GIF (`video-1x1.gif`, …).
+- All derived artifact paths are listed in `run.json` under `artifacts.videoGifPath` and `artifacts.videoVariants`.
+
+### Brand overlays (`output.brand`)
+
+Put *your* brand on generated videos (licensed use — this is independent of the AutoDemo attribution footer):
+
+```yaml
+output:
+  brand:
+    logoPath: public/brand/logo.png # watermarked onto the video via ffmpeg
+    logoPosition: bottom-right # top-left | top-right | bottom-left | bottom-right
+    logoWidthPx: 120
+    introCard: true # title card rendered from scenario.story (title/goal/persona)
+    outroCard: true
+    outroText: "Get started at example.com" # defaults to story.title
+    cardDurationMs: 2200
+    background: "#111827"
+    textColor: "#ffffff"
+```
+
+- Intro/outro title cards are rendered from the scenario's `story` metadata (`title`, `goal`, `persona`) at the viewport size and prepended/appended to the frames video. They require the default `browser.video.source: frames`.
+- The logo watermark is burned into the master MP4 before aspect/GIF derivation, so every variant carries it.
+
+### Captions (`output.captions`)
+
+Generate captions from step `note` fields (and `narrate` text):
+
+```yaml
+output:
+  captions:
+    enabled: true # writes captions.srt + captions.vtt next to video.mp4
+    burnIn: false # also burn captions into the MP4 (requires ffmpeg with libass)
+```
+
+Cue timing follows the video timeline: with the default frames source each step's note spans that step's frame; with `source: playwright` the recorded step offsets are used. Consecutive steps with the same note are merged into one cue. Sidecar paths appear in `run.json` as `artifacts.captionsSrtPath` / `artifacts.captionsVttPath`.
+
 ### `output.branding`
 
 Generated walkthroughs include a small "Made with AutoDemo" footer link. Disable it with:

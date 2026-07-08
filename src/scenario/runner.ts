@@ -14,6 +14,9 @@ import type { RunJson, RunJsonAsset, RunJsonStep, RunStatus } from "../output/ty
 import { scenarioLatestDir, stepScreenshotPath, stepsDir } from "../output/paths.ts";
 import { writeInteractiveHtml, writeRunJson } from "../output/writeArtifacts.ts";
 import { convertWebmToMp4, assembleMp4FromFrames, isFfmpegAvailable, type VideoFrame } from "../output/video.ts";
+import { buildFrameCaptionCues, buildStepCaptionCues, type CaptionCue } from "../output/captions.ts";
+import { postProcessVideo, type PostProcessResult } from "../output/postProcess.ts";
+import { renderTitleCardPng } from "../branding/titleCards.ts";
 import { ensureDir, rmrf } from "../utils/fs.ts";
 import { installCursorOverlay } from "../utils/cursorOverlay.ts";
 import { installCaptureGuards } from "../utils/captureGuards.ts";
@@ -283,6 +286,7 @@ export async function runScenario(opts: RunScenarioOpts): Promise<RunScenarioRes
   });
 
   const videoFrames: VideoFrame[] = [];
+  const frameNotes: Array<string | undefined> = [];
   const lastStepIndex = scenario.steps.length - 1;
 
   for (let i = 0; i < scenario.steps.length; i++) {
@@ -356,6 +360,7 @@ export async function runScenario(opts: RunScenarioOpts): Promise<RunScenarioRes
           path: frameAbs,
           durationMs: transitionMs + (i === lastStepIndex ? endPauseMs : 0),
         });
+        frameNotes.push(step.note ?? (step.type === "narrate" ? step.text : undefined));
       }
 
       const stepFinishedMs = Date.now();
@@ -461,6 +466,68 @@ export async function runScenario(opts: RunScenarioOpts): Promise<RunScenarioRes
     }
   }
 
+  // Render brand intro/outro title cards from story metadata using the live
+  // page (must happen before the session closes; navigates away from the app).
+  const brandCfg = opts.config.output.brand;
+  const cardDurationMs = brandCfg?.cardDurationMs ?? 2200;
+  let introFrame: VideoFrame | undefined;
+  let outroFrame: VideoFrame | undefined;
+  if (
+    status === "success" &&
+    recordVideo &&
+    videoSource === "frames" &&
+    brandCfg &&
+    (brandCfg.introCard || brandCfg.outroCard)
+  ) {
+    const logoAbs = brandCfg.logoPath ? resolveCwdPath(brandCfg.logoPath) : undefined;
+    const introTitle = scenario.story?.title ?? scenario.description ?? opts.scenarioName;
+    if (brandCfg.introCard) {
+      try {
+        const framePath = path.join(outDir, "frames", "intro.png");
+        await renderTitleCardPng({
+          page: session.page,
+          outPath: framePath,
+          card: {
+            title: introTitle,
+            subtitle: scenario.story?.goal,
+            footer: scenario.story?.persona,
+            background: brandCfg.background,
+            textColor: brandCfg.textColor,
+            logoPath: logoAbs,
+          },
+        });
+        introFrame = { path: framePath, durationMs: cardDurationMs };
+      } catch (err) {
+        await appendFile(
+          logPath,
+          `[${new Date().toISOString()}] intro card failed: ${err instanceof Error ? err.message : err}\n`,
+        ).catch(() => {});
+      }
+    }
+    if (brandCfg.outroCard) {
+      try {
+        const framePath = path.join(outDir, "frames", "outro.png");
+        await renderTitleCardPng({
+          page: session.page,
+          outPath: framePath,
+          card: {
+            title: brandCfg.outroText ?? introTitle,
+            footer: opts.config.project.name,
+            background: brandCfg.background,
+            textColor: brandCfg.textColor,
+            logoPath: logoAbs,
+          },
+        });
+        outroFrame = { path: framePath, durationMs: cardDurationMs };
+      } catch (err) {
+        await appendFile(
+          logPath,
+          `[${new Date().toISOString()}] outro card failed: ${err instanceof Error ? err.message : err}\n`,
+        ).catch(() => {});
+      }
+    }
+  }
+
   const { videoWebmPath } = await closePlaywrightSession(session).catch(() => ({
     videoWebmPath: undefined,
   }));
@@ -469,14 +536,19 @@ export async function runScenario(opts: RunScenarioOpts): Promise<RunScenarioRes
     await closeStagehandSession(stagehandSession).catch(() => {});
   }
   let videoMp4PathRel: string | undefined;
+  let captionCues: CaptionCue[] = [];
   if (recordVideo && videoSource === "frames" && videoFrames.length > 0) {
     try {
       if (await isFfmpegAvailable()) {
-        const frames =
-          scenario.videoStartStep !== undefined
-            ? videoFrames.slice(scenario.videoStartStep)
-            : videoFrames;
-        if (frames.length > 0) {
+        const startIndex = scenario.videoStartStep ?? 0;
+        const stepFrames = videoFrames.slice(startIndex);
+        const stepNotes = frameNotes.slice(startIndex);
+        const frames = [
+          ...(introFrame ? [introFrame] : []),
+          ...stepFrames,
+          ...(outroFrame ? [outroFrame] : []),
+        ];
+        if (stepFrames.length > 0) {
           const mp4Abs = path.join(outDir, "video.mp4");
           await assembleMp4FromFrames({
             frames,
@@ -487,6 +559,11 @@ export async function runScenario(opts: RunScenarioOpts): Promise<RunScenarioRes
             logPath,
           });
           videoMp4PathRel = "video.mp4";
+          captionCues = buildFrameCaptionCues({
+            frames: stepFrames,
+            notes: stepNotes,
+            leadInMs: introFrame ? introFrame.durationMs : 0,
+          });
         }
       }
     } catch {
@@ -510,10 +587,36 @@ export async function runScenario(opts: RunScenarioOpts): Promise<RunScenarioRes
           startMs: videoStartOffsetMs,
         });
         videoMp4PathRel = "video.mp4";
+        captionCues = buildStepCaptionCues(steps, videoStartOffsetMs ?? 0);
       }
     } catch {
       // ignore
     }
+  }
+
+  // Brand overlay, captions, aspect-ratio variants, and GIF exports derived
+  // from the master MP4 in a single run.
+  let postProcess: PostProcessResult = {};
+  if (videoMp4PathRel) {
+    postProcess = await postProcessVideo({
+      outDir,
+      masterMp4Abs: path.join(outDir, videoMp4PathRel),
+      brand: brandCfg
+        ? {
+            logoPath: brandCfg.logoPath,
+            logoPosition: brandCfg.logoPosition,
+            logoWidthPx: brandCfg.logoWidthPx,
+          }
+        : undefined,
+      formats: opts.config.output.formats ?? ["mp4"],
+      aspectRatios: opts.config.output.aspectRatios ?? [],
+      captions: {
+        enabled: opts.config.output.captions?.enabled ?? false,
+        burnIn: opts.config.output.captions?.burnIn ?? false,
+      },
+      cues: captionCues,
+      logPath,
+    });
   }
 
   const interactiveHtmlAbs = await writeInteractiveHtml(outDir, {
@@ -536,6 +639,10 @@ export async function runScenario(opts: RunScenarioOpts): Promise<RunScenarioRes
       ffmpegLogPath: path.relative(process.cwd(), logPath),
       ...(assets.length ? { assets } : {}),
       ...(videoMp4PathRel ? { videoMp4Path: videoMp4PathRel } : {}),
+      ...(postProcess.videoGifPath ? { videoGifPath: postProcess.videoGifPath } : {}),
+      ...(postProcess.videoVariants ? { videoVariants: postProcess.videoVariants } : {}),
+      ...(postProcess.captionsSrtPath ? { captionsSrtPath: postProcess.captionsSrtPath } : {}),
+      ...(postProcess.captionsVttPath ? { captionsVttPath: postProcess.captionsVttPath } : {}),
       ...(traceZipPathRel ? { traceZipPath: traceZipPathRel } : {}),
     },
   };

@@ -259,6 +259,54 @@ export const AutoDemoConfigSchema = z.object({
     clean: z.boolean().default(true),
     /** Show a small "Made with AutoDemo" footer in generated walkthroughs. */
     branding: z.boolean().default(true),
+    /**
+     * Video export formats produced from a single run. `mp4` is the master;
+     * `gif` derives an animated GIF (fps 12, max width 640) for embeds.
+     */
+    formats: z.array(z.enum(["mp4", "gif"])).default(["mp4"]),
+    /**
+     * Social aspect-ratio presets derived from the master video by center
+     * cropping (e.g. video-1x1.mp4, video-9x16.mp4). The master keeps the
+     * viewport's native aspect.
+     */
+    aspectRatios: z.array(z.enum(["16:9", "1:1", "9:16"])).default([]),
+    /** Captions generated from step `note` fields. */
+    captions: z
+      .object({
+        /** Write captions.srt and captions.vtt next to the video. */
+        enabled: z.boolean().default(false),
+        /** Also burn captions into the master MP4 (requires ffmpeg with libass). */
+        burnIn: z.boolean().default(false),
+      })
+      .default({}),
+    /**
+     * Your brand on the output (licensed use): logo watermark and intro/outro
+     * title cards rendered from the scenario's `story` metadata.
+     */
+    brand: z
+      .object({
+        /** Path to a logo image (PNG/SVG rendered by ffmpeg) overlaid on the video. */
+        logoPath: z.string().min(1).optional(),
+        logoPosition: z
+          .enum(["top-left", "top-right", "bottom-left", "bottom-right"])
+          .default("bottom-right"),
+        logoWidthPx: z.number().int().positive().default(120),
+        /** Render an intro title card from scenario.story (title/persona/goal). */
+        introCard: z.boolean().default(false),
+        /** Render an outro card (outroText or story.title). */
+        outroCard: z.boolean().default(false),
+        outroText: z.string().min(1).optional(),
+        cardDurationMs: z.number().int().positive().default(2200),
+        background: z
+          .string()
+          .regex(/^#[0-9a-fA-F]{6}$/)
+          .default("#111827"),
+        textColor: z
+          .string()
+          .regex(/^#[0-9a-fA-F]{6}$/)
+          .default("#ffffff"),
+      })
+      .optional(),
   }),
   llm: z
     .object({
