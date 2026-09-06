@@ -28,8 +28,7 @@ body {
     "Segoe UI Emoji";
   background:
     radial-gradient(1200px 700px at 20% 10%, rgba(102, 163, 255, 0.25), transparent 60%),
-    radial-gradient(1200px 700px at 80% 20%, rgba(124, 92, 255, 0.18), transparent 60%),
-    var(--bg);
+    radial-gradient(1200px 700px at 80% 20%, rgba(124, 92, 255, 0.18), transparent 60%), var(--bg);
   color: var(--text);
 }
 
@@ -43,7 +42,9 @@ a:hover {
 }
 
 code {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+    monospace;
 }
 
 .wrap {
@@ -342,6 +343,22 @@ h2 {
   color: var(--muted);
 }
 
+#faq details {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0 16px;
+  margin-bottom: 10px;
+}
+#faq summary {
+  cursor: pointer;
+  padding: 14px 0;
+  font-weight: 600;
+}
+#faq details p {
+  margin: 0 0 14px;
+}
+
 .footer {
   padding-bottom: 40px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
@@ -357,5 +374,3 @@ h2 {
     grid-template-columns: 1fr;
   }
 }
-
-

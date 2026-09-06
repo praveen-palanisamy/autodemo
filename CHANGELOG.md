@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- **Site SEO/AEO**: canonical + keywords + author/robots meta, absolute Open Graph/Twitter cards (image + video), JSON-LD (`SoftwareApplication`, `SoftwareSourceCode`, `VideoObject`, `FAQPage`, `Person`), on-page FAQ, favicon, attribution/citation footer with npm + Marketplace links. `siteBuild.ts` now injects the package version/build date and emits `robots.txt`, `sitemap.xml`, `llms.txt`, `llms-full.txt`, `humans.txt`.
+
 ## v0.2.0 — Internal scenarios, CI gates, Pages reliability
 
 - **Scenarios**: `internal: true` skips bootstrap/login flows from `autodemo run --all`; still runnable by name. `--exclude name1,name2` omits named scenarios from `--all`.
