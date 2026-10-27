@@ -220,6 +220,7 @@ export async function runScenario(opts: RunScenarioOpts): Promise<RunScenarioRes
         recordVideo: usePlaywrightRecorder,
         enableTracing: true, // needed to export trace on failure
         storageStatePath,
+        permissions: opts.config.browser.permissions,
       });
 
   if (opts.config.browser.capture?.hideDevOverlays ?? true) {

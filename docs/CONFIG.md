@@ -149,6 +149,15 @@ Overrides without editing config: `AUTODEMO_LLM_PROVIDER`, `AUTODEMO_LLM_MODEL`,
 - `highlightClicks`: draw a ring on click.
 - `clickRadius`: ring radius in px.
 
+### Browser permissions (`browser.permissions`)
+
+Grant Playwright context permissions for the whole run, for example so "Copy" buttons that call `navigator.clipboard.writeText` work headless:
+
+```yaml
+browser:
+  permissions: ["clipboard-read", "clipboard-write"]
+```
+
 ### Auth state (`auth`)
 
 `auth.statePath` points to a Playwright storage state file. When the file exists, AutoDemo loads it before the first step. When `auth.saveState: true`, AutoDemo writes the browser state after a successful run.

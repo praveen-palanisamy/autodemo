@@ -20,6 +20,7 @@ export type CreatePlaywrightSessionOpts = {
   recordVideo: boolean;
   enableTracing: boolean;
   storageStatePath?: string;
+  permissions?: string[];
 };
 
 export async function createPlaywrightSession(
@@ -33,6 +34,7 @@ export async function createPlaywrightSession(
   const context = await browser.newContext({
     viewport: opts.viewport,
     deviceScaleFactor: 1,
+    ...(opts.permissions?.length ? { permissions: opts.permissions } : {}),
     ...(opts.storageStatePath && existsSync(opts.storageStatePath)
       ? { storageState: opts.storageStatePath }
       : {}),

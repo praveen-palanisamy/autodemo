@@ -46,3 +46,29 @@ scenarios:
 });
 
 
+test("loadConfig accepts browser.permissions", async () => {
+  const cwd = process.cwd();
+  const tmpDir = path.join(cwd, ".autodemo-out", "unit");
+  await mkdir(tmpDir, { recursive: true });
+  const cfgPath = path.join(tmpDir, ".autodemo.permissions.yml");
+  await writeFile(
+    cfgPath,
+    `
+project:
+  name: TestApp
+output:
+  dir: .autodemo-out/demos
+browser:
+  permissions: ["clipboard-read", "clipboard-write"]
+scenarios:
+  hello:
+    steps:
+      - type: goto
+        url: /
+`,
+    "utf8",
+  );
+
+  const { config } = await loadConfig({ cwd, configPath: cfgPath });
+  expect(config.browser.permissions).toEqual(["clipboard-read", "clipboard-write"]);
+});

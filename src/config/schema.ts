@@ -327,6 +327,11 @@ export const AutoDemoConfigSchema = z.object({
       headless: z.boolean().default(false),
       viewport: ViewportSchema.default({ width: 1600, height: 900 }),
       recordVideo: z.boolean().default(false),
+      /**
+       * Playwright context permissions to grant, e.g. ["clipboard-read",
+       * "clipboard-write"] for demos that click "Copy" buttons headless.
+       */
+      permissions: z.array(z.string().min(1)).optional(),
       cursor: CursorSchema.default({}),
       transitions: TransitionsSchema.default({}),
       capture: CaptureSchema.default({}),
